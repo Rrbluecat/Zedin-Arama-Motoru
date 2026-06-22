@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import glob
+import threading # 🚀 Otomasyon thread yönetimi için eklendi
 from flask import Flask, request, render_template_string, redirect, url_for, abort, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -24,12 +26,42 @@ def bot_kontrolu():
     if any(bot in user_agent for bot in KARA_LISTE_BOTLAR):
         abort(403)
 
-# 🚀 [YENİ] GLOBAL BELLEK ÖNBELLEĞİ: JSON dosyası sunucu başlarken RAM'e alınır, disk yorulmaz
-ARAMA_INDEKSI = []
+# 🚀 [YENİ SHARDING SIFINIF MİMARİSİ]: RAM'deki listeyi bozmadan arka planda harflere ayıran akıllı liste nesnesi
+class ShardedIndexList(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.shards = {}
+    def append(self, item):
+        super().append(item)
+        self._add_to_shard(item)
+    def _add_to_shard(self, item):
+        if isinstance(item, list) and len(item) > 1:
+            baslik = item[1]
+            harf = "diger"
+            if baslik:
+                ilk = str(baslik)[0].lower()
+                mapping = {'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u'}
+                ilk = mapping.get(ilk, ilk)
+                if ilk.isalnum(): harf = ilk
+            if harf not in self.shards: self.shards[harf] = []
+            if item not in self.shards[harf]: self.shards[harf].append(item)
+
+# 🚀 Sunucu başlarken tüm sharded disk dosyalarını RAM'e toplar
+ARAMA_INDEKSI = ShardedIndexList()
+
+for dosya in glob.glob("arama_indeksi_*.json"):
+    try:
+        with open(dosya, "r", encoding="utf-8") as f:
+            for v in json.load(f):
+                ARAMA_INDEKSI.append(v)
+    except:
+        pass
+
 if os.path.exists("arama_indeksi.json"):
     try:
         with open("arama_indeksi.json", "r", encoding="utf-8") as f:
-            ARAMA_INDEKSI = json.load(f)
+            for v in json.load(f):
+                if v not in ARAMA_INDEKSI: ARAMA_INDEKSI.append(v)
         print(f"[*] Başarıyla {len(ARAMA_INDEKSI)} döküman belleğe yüklendi.")
     except Exception as e:
         print(f"[!] İndeks okunurken hata oluştu: {e}")
@@ -151,7 +183,7 @@ HTML_SABLON = """
         .no-result { text-align: center; padding: 60px 20px; color: var(--muted); }
         .no-result-icon { font-size: 40px; margin-bottom: 12px; }
         .no-result-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-        
+
         /* HİBRİT PANEL GRUPLARI */
         .admin-section { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
         .admin-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
@@ -224,7 +256,7 @@ HTML_SABLON = """
         function yerelDBBaslat() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open("ZedinYerelHafiza", 1);
-                
+
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("siteler")) {
@@ -246,7 +278,7 @@ HTML_SABLON = """
         function yerelVerileriGetir() {
             return new Promise((resolve) => {
                 if (!yerelVeritabanı) return resolve([]);
-                
+
                 const transaction = yerelVeritabanı.transaction("siteler", "readonly");
                 const store = transaction.objectStore("siteler");
                 const istek = store.getAll();
@@ -272,7 +304,7 @@ HTML_SABLON = """
 
             const transaction = yerelVeritabanı.transaction("siteler", "readwrite");
             const store = transaction.objectStore("siteler");
-            
+
             // Yapıyı bozmamak adına indeks_olusturucu dizilimi ile tam uyumlu array formatı: [url, baslik, icerik]
             store.add([url, baslik, icerik]);
 
@@ -360,6 +392,24 @@ HTML_SABLON = """
             window.history.pushState({}, '', '?q=' + encodeURIComponent(sorgu));
             document.getElementById('ust-arama-input').value = sorgu;
             ekranDegistir(true);
+
+            // 🎯 [YENİ SHARDING AKILLI DİNAMİK YÜKLEYİCİ]: Sadece aranan kelimenin baş harfine ait JSON parçasını indirir, RAM uçuşa geçer!
+            try {
+                let harf = "diger";
+                if (sorgu.length > 0) {
+                    let ilk = sorgu.charAt(0).toLowerCase();
+                    const mapping = {'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u'};
+                    ilk = mapping[ilk] || ilk;
+                    if (/^[a-z0-9]$/.test(ilk)) { harf = ilk; }
+                }
+                const shardRes = await fetch('/api/indeks?harf=' + harf);
+                if (shardRes.ok) {
+                    const shardVerisi = await shardRes.json();
+                    shardVerisi.forEach(item => {
+                        if (!zedinHafizasi.some(x => x[0] === item[0])) { zedinHafizasi.push(item); }
+                    });
+                }
+            } catch(err) { console.error("Shard yükleme hatası:", err); }
 
             const t0 = performance.now();
             let sonuclar = [];
@@ -451,9 +501,12 @@ HTML_SABLON = """
 def ara():
     return render_template_string(HTML_SABLON)
 
-# 🚀 [YENİ] ULTRA HIZLI API ENDPOINT: Sıkıştırılmış JSON listesini istemciye fırlatır
+# 🚀 [YENİ ULTRA SHARD API]: İstek harf içeriyorsa sadece o harfe ait hafifletilmiş paketi fırlatır!
 @app.route("/api/indeks")
 def api_indeks():
+    harf = request.args.get("harf", "").lower()
+    if harf and hasattr(ARAMA_INDEKSI, 'shards'):
+        return jsonify(ARAMA_INDEKSI.shards.get(harf, []))
     return jsonify(ARAMA_INDEKSI)
 
 @app.route("/ekle", methods=["POST"])
@@ -463,6 +516,15 @@ def ekle():
     if hedef_url:
         link_ayıkla_ve_tarla(hedef_url, max_sayfa=50)
     return redirect(url_for("ara"))
+
+# 🚀 [YENİ GİZLİ OTOMASYON ROTASI]: Sunucu açıkken arka planda tohum listesini taratır
+@app.route("/zedin-sihirbazini-uyandir-99")
+def otomatik_besle_tetikle():
+    from tarayici import zedin_otomatik_besleme
+    # Asenkron Thread sayesinde sunucu donmaz, arama motoru aktif kalır
+    thread = threading.Thread(target=zedin_otomatik_besleme)
+    thread.start()
+    return "Zedin örümcekleri canlı sunucu açıkken arka planda çalışmaya başladı! Veriler anlık işleniyor."
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
