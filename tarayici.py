@@ -1,4 +1,5 @@
-import sqlite3
+import json
+import os
 import requests
 import time
 import urllib.parse
@@ -11,19 +12,10 @@ optimizer = ZedinOptimizer(benzerlik_esigi=5)
 
 def veritabani_olustur():
     """Veritabanı ve tabloyu oluşturur, yoksa yaratır."""
-    conn = sqlite3.connect('lokal_arama.db')
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sayfalar (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT UNIQUE NOT NULL,
-            baslik TEXT,
-            icerik TEXT,
-            tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    # SQLite yerine JSON deposunu kontrol eder ve yoksa oluşturur
+    if not os.path.exists('arama_indeksi.json'):
+        with open('arama_indeksi.json', 'w', encoding='utf-8') as f:
+            json.dump([], f)
     print("[DB] Veritabanı hazır.")
 
 def link_ayıkla_ve_tarla(baslangic_url, max_sayfa=1000):
@@ -32,8 +24,18 @@ def link_ayıkla_ve_tarla(baslangic_url, max_sayfa=1000):
     sayac = 0
     baslangic_domain = urllib.parse.urlsplit(baslangic_url).netloc
 
-    conn = sqlite3.connect('lokal_arama.db')
-    cursor = conn.cursor()
+    # SQL bağlantısı yerine mevcut JSON verilerini hafızaya yükleme
+    sıkıstırılmıs_indeks = []
+    mevcut_urller = set()
+    if os.path.exists('arama_indeksi.json'):
+        try:
+            with open('arama_indeksi.json', 'r', encoding='utf-8') as f:
+                sıkıstırılmıs_indeks = json.load(f)
+                for veri in sıkıstırılmıs_indeks:
+                    if len(veri) > 0:
+                        mevcut_urller.add(veri[0])
+        except:
+            sıkıstırılmıs_indeks = []
 
     try:
         while kuyruk and sayac < max_sayfa:
@@ -68,14 +70,21 @@ def link_ayıkla_ve_tarla(baslangic_url, max_sayfa=1000):
                 baslik = soup.title.string.strip() if soup.title else url
 
                 try:
-                    cursor.execute(
-                        "INSERT INTO sayfalar (url, baslik, icerik) VALUES (?, ?, ?)",
-                        (url, baslik, icerik)
-                    )
-                    conn.commit()
+                    # UNIQUE NOT NULL kısıtlaması simülasyonu
+                    if url in mevcut_urller:
+                        raise Exception("IntegrityError")
+
+                    # İstemci tarafındaki (arayüz) JS motorunun tam performans okuyabileceği formata sıkıştırarak ekliyoruz
+                    sıkıstırılmıs_indeks.append([url, baslik[:60], icerik[:80]])
+                    mevcut_urller.add(url)
+
+                    # SQL Commit simülasyonu: JSON dosyasını diske kilitler
+                    with open('arama_indeksi.json', 'w', encoding='utf-8') as f:
+                        json.dump(sıkıstırılmıs_indeks, f, ensure_ascii=False, separators=(',', ':'))
+
                     sayac += 1
                     print(f"[{sayac}] İndekslendi: {baslik}")
-                except sqlite3.IntegrityError:
+                except:
                     print(f"[ATLA] Zaten var: {url}")
 
                 for a_etiketi in soup.find_all('a', href=True):
@@ -96,7 +105,6 @@ def link_ayıkla_ve_tarla(baslangic_url, max_sayfa=1000):
             except Exception as e:
                 print(f"Hata ({url}): {e}")
     finally:
-        conn.close()
         print(f"\n[BİTTİ] Toplam {sayac} sayfa indekslendi.")
 
 if __name__ == "__main__":
