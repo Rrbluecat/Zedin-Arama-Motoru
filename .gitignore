@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+lokal_arama.db
+lokal_arama.db-wal
+lokal_arama.db-shm
+.env
+
