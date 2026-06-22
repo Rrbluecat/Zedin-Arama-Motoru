@@ -1,0 +1,10 @@
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/autocfg-b43df89c81d7201b.d: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/libautocfg-b43df89c81d7201b.rlib: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/libautocfg-b43df89c81d7201b.rmeta: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs:

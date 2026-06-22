@@ -1,0 +1,9 @@
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/alloc_stdlib-4ddf40e0a09df864.d: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/heap_alloc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/std_alloc.rs
+
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/liballoc_stdlib-4ddf40e0a09df864.rlib: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/heap_alloc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/std_alloc.rs
+
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/rust_motor/target/release/deps/liballoc_stdlib-4ddf40e0a09df864.rmeta: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/heap_alloc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/std_alloc.rs
+
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/lib.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/heap_alloc.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloc-stdlib-0.2.4/src/std_alloc.rs:
