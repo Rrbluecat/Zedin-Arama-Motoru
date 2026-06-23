@@ -87,14 +87,38 @@ HTML_SABLON = """
             --url-color: #16a34a;
             --shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
+        /* 🌗 [YENİ] KOYU TEMA DEĞİŞKENLERİ - Tasarımı bozmadan renkleri override eder */
+        body.dark-theme {
+            --bg: #111827;
+            --text: #f9fafb;
+            --muted: #9ca3af;
+            --accent: #a78bfa;
+            --accent-light: #c084fc;
+            --border: #374151;
+            --card: #1f2937;
+            --hover: #374151;
+            --url-color: #4ade80;
+            --shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
         }
         /* GÖRÜNÜM KONTROLLERİ */
         .gizli { display: none !important; }
+
+        /* [YENİ] TEMA DEĞİŞTİRME BUTONU VE NAVİGASYON */
+        .top-right-nav { position: absolute; top: 20px; right: 24px; display: flex; gap: 12px; align-items: center; }
+        .theme-toggle {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text); padding: 7px 14px; border-radius: 20px;
+            cursor: pointer; font-size: 13px; font-weight: 500;
+            transition: all 0.15s;
+        }
+        .theme-toggle:hover { background: var(--hover); border-color: var(--accent); }
 
         /* ANA SAYFA */
         .home-page {
@@ -112,7 +136,7 @@ HTML_SABLON = """
             letter-spacing: -3px;
             margin-bottom: 32px;
         }
-        .home-search { width: 100%; max-width: 580px; }
+        .home-search { width: 100%; max-width: 580px; text-align: center; }
 
         /* SONUÇ SAYFASI */
         .results-header {
@@ -178,8 +202,10 @@ HTML_SABLON = """
         .result-url-text { font-size: 13px; color: var(--url-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
         .result-title { font-size: 19px; font-weight: 600; margin-bottom: 5px; line-height: 1.3; }
         .result-title a { color: #1d4ed8; text-decoration: none; }
+        body.dark-theme .result-title a { color: #60a5fa; }
         .result-title a:hover { text-decoration: underline; }
         .result-snippet { font-size: 14px; color: #374151; line-height: 1.6; }
+        body.dark-theme .result-snippet { color: #d1d5db; }
         .no-result { text-align: center; padding: 60px 20px; color: var(--muted); }
         .no-result-icon { font-size: 40px; margin-bottom: 12px; }
         .no-result-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
@@ -192,6 +218,7 @@ HTML_SABLON = """
         .admin-input { flex: 1; border: 1.5px solid var(--border); background: var(--card); padding: 9px 14px; border-radius: 8px; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
         .admin-input:focus { border-color: var(--accent); }
         .admin-btn { background: var(--text); color: white; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        body.dark-theme .admin-btn { background: var(--accent); }
         .admin-btn:hover { opacity: 0.8; }
         .yerel-btn { background: var(--accent); }
         @media (max-width: 600px) { .results-header { padding: 12px 16px; gap: 12px; } .results-body { padding: 20px 16px; } .result-title { font-size: 17px; } .admin-grid-form { grid-template-columns: 1fr; } }
@@ -200,14 +227,20 @@ HTML_SABLON = """
 <body>
 
     <div id="ana-sayfa-ekrani" class="home-page">
+        <div class="top-right-nav">
+            <button onclick="temaDegistir()" class="theme-toggle" id="btn-tema-home">🌙 Koyu Tema</button>
+        </div>
         <div class="home-logo">Zedin.</div>
         <div class="home-search">
             <form onsubmit="event.preventDefault(); yerelSorguGonder(this.q.value);">
                 <div class="search-wrap">
-                    <input type="text" name="q" class="search-input" placeholder="Ara..." autocomplete="off" autofocus>
+                    <input type="text" name="q" class="search-input" placeholder="Ara veya !w, !yt, !g kısayollarını kullan..." autocomplete="off" autofocus>
                     <button type="submit" class="search-btn">Ara</button>
                 </div>
             </form>
+            <div style="margin-top: 24px; font-size: 13px; color: var(--muted); letter-spacing: 0.5px;">
+                🔒 %100 Mahremiyet • Reklamsız • Takipçisiz
+            </div>
         </div>
     </div>
 
@@ -220,6 +253,7 @@ HTML_SABLON = """
                     <button type="submit" class="search-btn">Ara</button>
                 </div>
             </form>
+            <button onclick="temaDegistir()" class="theme-toggle" id="btn-tema-results">🌙 Koyu Tema</button>
         </header>
         <div class="results-body">
             <div id="arama-metrikleri" class="metrics"></div>
@@ -251,6 +285,28 @@ HTML_SABLON = """
     <script>
         let zedinHafizasi = [];
         let yerelVeritabanı = null;
+
+        // 🌗 [YENİ] TEMA YÖNETİM FONKSİYONLARI
+        function temaUygula(tema) {
+            const btnHome = document.getElementById('btn-tema-home');
+            const btnResults = document.getElementById('btn-tema-results');
+            if (tema === 'dark') {
+                document.body.classList.add('dark-theme');
+                if(btnHome) btnHome.innerText = '☀️ Açık Tema';
+                if(btnResults) btnResults.innerText = '☀️ Açık Tema';
+            } else {
+                document.body.classList.remove('dark-theme');
+                if(btnHome) btnHome.innerText = '🌙 Koyu Tema';
+                if(btnResults) btnResults.innerText = '🌙 Koyu Tema';
+            }
+        }
+
+        function temaDegistir() {
+            let mevcut = localStorage.getItem('zedin-tema') || 'light';
+            let yeni = mevcut === 'light' ? 'dark' : 'light';
+            localStorage.setItem('zedin-tema', yeni);
+            temaUygula(yeni);
+        }
 
         // 🗄️ [YENİ INTERFACE] Tarayıcı içi IndexedDB başlatıcı
         function yerelDBBaslat() {
@@ -319,6 +375,9 @@ HTML_SABLON = """
 
         // Sayfa açılır açılmaz sunucuyu yormadan sıkıştırılmış indeksi arka planda indiriyoruz
         async function indeksiIndir() {
+            // 🌗 Kayıtlı temayı yükle
+            temaUygula(localStorage.getItem('zedin-tema') || 'light');
+
             try {
                 // Önce tarayıcı lokal veritabanını hazır hale getiriyoruz
                 await yerelDBBaslat();
@@ -387,6 +446,21 @@ HTML_SABLON = """
         async function yerelSorguGonder(sorgu) {
             sorgu = sorgu.trim();
             if (!sorgu) return;
+
+            // 🎯 [YENİ] KAGI TARZI HIZLI KISAYOLLAR (Bang Kısayolları)
+            // Kullanıcıyı doğrudan ilgili dış kaynağa yönlendirir ve aramayı durdurur.
+            if (sorgu.startsWith('!w ')) {
+                window.location.href = 'https://tr.wikipedia.org/wiki/Special:Search?search=' + encodeURIComponent(sorgu.substring(3));
+                return;
+            }
+            if (sorgu.startsWith('!yt ')) {
+                window.location.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(sorgu.substring(4));
+                return;
+            }
+            if (sorgu.startsWith('!g ')) {
+                window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(sorgu.substring(3));
+                return;
+            }
 
             // URL'i güncelle (Paylaşılabilir arama linkleri için)
             window.history.pushState({}, '', '?q=' + encodeURIComponent(sorgu));
