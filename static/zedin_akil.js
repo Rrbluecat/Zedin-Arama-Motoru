@@ -1,5 +1,5 @@
 /**
- * 🧠 ZEDIN AKIL MOTORU (zedin_akil.js) - Mobil Debug ve Güvenli Mod Entegreli
+ * 🧠 ZEDIN AKIL MOTORU (zedin_akil.js) - Kesin Çözüm / Kararlı Model
  * Yapay Zeka, Lens Filtreleri, Site Puanlama ve Kullanıcı Scriptleri Yönetim Merkezi
  */
 
@@ -16,7 +16,7 @@ const ZedinAkılAyarları = {
     
     // Model yükleme durumu ve debug takibi
     modelYuklendimi: false,
-    sonHataMesaji: null // Telefonda F12 olmadan hatayı yakalamak için yeni alan
+    sonHataMesaji: null 
 };
 
 // 2. 🦥 LOKAL YAPILANDIRILMIŞ YAPAY ZEKA (Açık Kaynak Özetleme Motoru)
@@ -28,22 +28,18 @@ async function zedinAI_Baslat() {
         // Dinamik olarak Transformers.js kütüphanesini ve ENV (ortam ayarlarını) CDN üzerinden çağırıyoruz
         const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
         
-        // 🛠️ CLOUDFLARE 403 ENGELİ VE YEREL MODEL DESTEĞİ ÇÖZÜMÜ:
+        // Mobil uyumluluk ve önbellek stabilizasyonu
+        env.allowLocalModels = false; 
+        env.useBrowserCache = true;   
         
-        // 1. Önbelleği geri açıyoruz. Kapatınca sunucu bizi bot sanıp engelliyor.
-        env.useBrowserCache = true; 
+        // 🛠️ ALTERNATİF VE KARARLI MODEL:
+        // transformers.js ile dosya yapısı tam uyumlu olan distilbart modeline geçiş yaptık.
+        zedinYZEngine = await pipeline('summarization', 'Xenova/distilbart-cnn-6-6');
         
-        // 2. Modeli kendi sunucuna indirip yüklemek istersen diye yerel model kontrolünü aktif ediyoruz.
-        env.allowLocalModels = true; 
-        env.localModelPath = '/static/models/'; // Model dosyalarını arayacağı klasör yolu
-        
-        // Özetleme (summarization) görevleri için modeli hafızaya alıyoruz
-        zedinYZEngine = await pipeline('summarization', 'Xenova/LaMini-Flan-T5-78M');
         ZedinAkılAyarları.modelYuklendimi = true;
         console.log("[+] Zedin Yapay Zeka Motoru Hazır ve Lokalinde Çalışıyor!");
     } catch (err) {
         console.error("[-] Yapay zeka modeli yüklenirken hata oluştu:", err);
-        // Hatayı hafızaya alıyoruz ki telefonda ekrana basabilelim
         ZedinAkılAyarları.sonHataMesaji = err.message || String(err);
     }
 }
@@ -63,7 +59,7 @@ async function zedinAI_HizliYanitUret(sorgu, aramaSonuclari) {
     try {
         const out = await zedinYZEngine(sistemTalimati, {
             max_new_tokens: 60,
-            temperature: 0.3 // Daha tutarlı ve uydurmayan cevaplar için düşük tutuyoruz
+            temperature: 0.3 
         });
         return out[0].summary_text || "Yanıt oluşturulamadı.";
     } catch (e) {
@@ -94,20 +90,17 @@ function zedinSkorlaVeFiltrele(hamHavuz) {
     const aktifLensFonksiyonu = ZedinLensler[ZedinAkılAyarları.aktifLens] || ZedinLensler['genel'];
 
     for (let sayfa of hamHavuz) {
-        // Önce aktif lens filtresinden geçiyor mu bakıyoruz
         if (!aktifLensFonksiyonu(sayfa)) continue;
 
         let url = sayfa[0] || "";
         let tabanSkor = 0;
 
-        // Kullanıcının kişisel site puanlamasını işin içine katıyoruz
         Object.keys(ZedinAkılAyarları.siteSkorları).forEach(domain => {
             if (url.includes(domain)) {
                 tabanSkor += ZedinAkılAyarları.siteSkorları[domain];
             }
         });
 
-        // Eğer site tamamen engellenmişse (-100 veya altı) havuzdan tamamen eliyoruz
         if (tabanSkor <= -100) continue;
 
         filtrelenmişHavuz.push({ sayfa, kisiselSkor: tabanSkor });
@@ -116,36 +109,29 @@ function zedinSkorlaVeFiltrele(hamHavuz) {
     return filtrelenmişHavuz;
 }
 
-// Sayfa yüklendiğinde yapay zekayı asenkron olarak ayağa kaldır ve telefonda test için gösterge ekle
+// Sayfa yüklendiğinde işlemleri başlat
 document.addEventListener("DOMContentLoaded", () => {
-    // Ekranın en üstüne yapışık küçük bir durum çubuğu oluşturuyoruz (F12 alternatifi)
     const aiStatus = document.createElement('div');
     aiStatus.id = "ai-status-bar";
     aiStatus.style = "position:fixed; top:0; left:0; width:100%; background:#f59e0b; color:white; text-align:center; font-size:12px; padding:8px; z-index:9999; font-family:sans-serif; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;";
-    aiStatus.innerText = "🧠 Zedin AI: Model yükleniyor (Lensler ve Puanlama Aktif)...";
+    aiStatus.innerText = "🧠 Zedin AI: Model arka planda yükleniyor (Lensler ve Puanlama Aktif)...";
     document.body.appendChild(aiStatus);
 
-    // Başlatma fonksiyonunu çağırıp bittiğinde göstergeyi güncelliyoruz
     zedinAI_Baslat().then(() => {
         if (ZedinAkılAyarları.modelYuklendimi) {
-            aiStatus.style.background = "#16a34a"; // Model yüklenince yeşil yap
+            aiStatus.style.background = "#16a34a"; 
             aiStatus.innerText = "🧠 Zedin AI: Lokal Model Hazır! Test edebilirsin.";
-            
-            // 4 saniye sonra ekrandan otomatik kaybolur
             setTimeout(() => aiStatus.remove(), 4000);
         } else {
-            // Hata durumunda kırmızı yap ve alt satıra gerçek hata kodunu yaz (DEBUG)
             aiStatus.style.background = "#dc2626"; 
             aiStatus.style.padding = "12px 8px";
             
-            const hataDetayi = ZedinAkılAyarları.sonHataMesaji || "Bilinmeyen tarayıcı kısıtlaması (CORS veya Hızlı Kapatma).";
+            const hataDetayi = ZedinAkılAyarları.sonHataMesaji || "Bağlantı veya yükleme hatası.";
             aiStatus.innerHTML = `⚠️ Zedin AI Modeli Yüklenemedi!<br><span style="font-weight:normal; font-size:10px; opacity:0.9; display:block; margin-top:4px; word-break:break-all;">Hata: ${hataDetayi}</span><br><span style="font-size:11px; color:#fef08a;">[Lens filtreleri ve Sıralama şu an sorunsuz çalışıyor, test edebilirsin!]</span>`;
             
-            // Kullanıcı hatayı rahatça okuyabilsin diye hata çubuğunu ekranda daha uzun (10 saniye) tutuyoruz
             setTimeout(() => aiStatus.remove(), 10000);
         }
     }).catch(err => {
-        // Genel çökme koruması
         aiStatus.style.background = "#dc2626";
         aiStatus.innerText = "❌ Kritik Motor Hatası! Lensler açık tutuluyor.";
         setTimeout(() => aiStatus.remove(), 5000);
