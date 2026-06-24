@@ -25,8 +25,12 @@ let zedinYZEngine = null;
 async function zedinAI_Baslat() {
     console.log("[*] Zedin Akıl Örüntüsü Uyanıyor... Model yükleniyor.");
     try {
-        // Dinamik olarak Transformers.js kütüphanesini CDN üzerinden çağırıyoruz
-        const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
+        // Dinamik olarak Transformers.js kütüphanesini ve ENV (ortam ayarlarını) CDN üzerinden çağırıyoruz
+        const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
+        
+        // 🛠️ MOBİL GÜVENLİK VE "UNAUTHORIZED ACCESS" HATASI ÇÖZÜMÜ:
+        env.allowLocalModels = false; // Localde model aramayı kapat, doğrudan sunucudan çek
+        env.useBrowserCache = false;  // Tarayıcının katı güvenlik duvarına (Cache Sandbox) takılmamak için önbelleği kapat
         
         // Özetleme (summarization) görevleri için modeli hafızaya alıyoruz
         zedinYZEngine = await pipeline('summarization', 'Xenova/LaMini-Flan-T5-78M');
