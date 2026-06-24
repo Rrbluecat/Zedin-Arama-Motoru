@@ -28,9 +28,14 @@ async function zedinAI_Baslat() {
         // Dinamik olarak Transformers.js kütüphanesini ve ENV (ortam ayarlarını) CDN üzerinden çağırıyoruz
         const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
         
-        // 🛠️ MOBİL GÜVENLİK VE "UNAUTHORIZED ACCESS" HATASI ÇÖZÜMÜ:
-        env.allowLocalModels = false; // Localde model aramayı kapat, doğrudan sunucudan çek
-        env.useBrowserCache = false;  // Tarayıcının katı güvenlik duvarına (Cache Sandbox) takılmamak için önbelleği kapat
+        // 🛠️ CLOUDFLARE 403 ENGELİ VE YEREL MODEL DESTEĞİ ÇÖZÜMÜ:
+        
+        // 1. Önbelleği geri açıyoruz. Kapatınca sunucu bizi bot sanıp engelliyor.
+        env.useBrowserCache = true; 
+        
+        // 2. Modeli kendi sunucuna indirip yüklemek istersen diye yerel model kontrolünü aktif ediyoruz.
+        env.allowLocalModels = true; 
+        env.localModelPath = '/static/models/'; // Model dosyalarını arayacağı klasör yolu
         
         // Özetleme (summarization) görevleri için modeli hafızaya alıyoruz
         zedinYZEngine = await pipeline('summarization', 'Xenova/LaMini-Flan-T5-78M');
