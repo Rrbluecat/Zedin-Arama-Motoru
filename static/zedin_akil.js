@@ -1,5 +1,5 @@
 /**
- * 🧠 ZEDIN AKIL MOTORU (zedin_akil.js) - Kesin Çözüm / Kararlı Model
+ * 🧠 ZEDIN AKIL MOTORU (zedin_akil.js) - Sunucusuz & Anahtarsız API Modu
  * Yapay Zeka, Lens Filtreleri, Site Puanlama ve Kullanıcı Scriptleri Yönetim Merkezi
  */
 
@@ -19,51 +19,67 @@ const ZedinAkılAyarları = {
     sonHataMesaji: null 
 };
 
-// 2. 🦥 LOKAL YAPILANDIRILMIŞ YAPAY ZEKA (Açık Kaynak Özetleme Motoru)
-let zedinYZEngine = null;
+// 2. 🦥 BULUT TABANLI YAPAY ZEKA (Ücretsiz & Anahtarsız Entegrasyon)
+// Tarayıcıyı yormamak için Hugging Face'in ücretsiz genel özetleme modelini dışarıdan çağırıyoruz
+const HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
 
 async function zedinAI_Baslat() {
-    console.log("[*] Zedin Akıl Örüntüsü Uyanıyor... Model yükleniyor.");
+    console.log("[*] Zedin Akıl Örüntüsü API Modunda Başlatılıyor...");
     try {
-        // Dinamik olarak Transformers.js kütüphanesini ve ENV (ortam ayarlarını) CDN üzerinden çağırıyoruz
-        const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
+        // Anahtarsız sistemin aktif olup olmadığını kontrol etmek için sunucuya hafif bir ping atıyoruz
+        const response = await fetch(HF_API_URL, {
+            method: "POST",
+            body: JSON.stringify({ inputs: "Ping" })
+        });
         
-        // Mobil uyumluluk ve önbellek stabilizasyonu
-        env.allowLocalModels = false; 
-        env.useBrowserCache = true;   
-        
-        // 🛠️ ALTERNATİF VE KARARLI MODEL:
-        // transformers.js ile dosya yapısı tam uyumlu olan distilbart modeline geçiş yaptık.
-        zedinYZEngine = await pipeline('summarization', 'Xenova/distilbart-cnn-6-6');
-        
-        ZedinAkılAyarları.modelYuklendimi = true;
-        console.log("[+] Zedin Yapay Zeka Motoru Hazır ve Lokalinde Çalışıyor!");
+        // Sunucu 200 veya 503 (Model yükleniyor) döndüyse bağlantı var demektir
+        if (response.status === 200 || response.status === 503) {
+            ZedinAkılAyarları.modelYuklendimi = true;
+            console.log("[+] Zedin Yapay Zeka Bulut Motoru Bağlantısı Başarılı!");
+            return true;
+        } else {
+            throw new Error(`Sunucu yanıt vermedi (Durum: ${response.status})`);
+        }
     } catch (err) {
-        console.error("[-] Yapay zeka modeli yüklenirken hata oluştu:", err);
+        console.error("[-] Yapay zeka API bağlantı hatası:", err);
         ZedinAkılAyarları.sonHataMesaji = err.message || String(err);
+        ZedinAkılAyarları.modelYuklendimi = false;
+        return false;
     }
 }
 
 // 3. 📝 SCRIPT TABANLI YAPAY ZEKA EĞİTİMİ (Context & Prompt Engineering)
 async function zedinAI_HizliYanitUret(sorgu, aramaSonuclari) {
-    if (!ZedinAkılAyarları.modelYuklendimi || !zedinYZEngine) {
-        return "Yapay zeka modeli şu an devre dışı, ancak arama sonuçları ve lens filtreleri aktif!";
+    if (!ZedinAkılAyarları.modelYuklendimi) {
+        return "Yapay zeka bulut motoru şu an kapalı, ancak arama sonuçları ve lens filtreleri aktif!";
     }
 
-    // [SCRIPT ENJEKSİYONU] Arama sonuçlarından ilk 3 tanesinin özetini alıp bağlam oluşturuyoruz
+    // Arama sonuçlarından ilk 3 tanesinin özetini alıp bağlam oluşturuyoruz
     let baglamMetni = aramaSonuclari.slice(0, 3).map(s => s.sayfa[2]).join(" ");
     
-    // Modelimizi script vasıtasıyla yönlendirdiğimiz kısım:
+    // Modelin kafası karışmasın diye temiz bir prompt hazırlıyoruz
     const sistemTalimati = `Soru: ${sorgu}. Verilen bilgilere göre net ve kısa bir Türkçe cevap üret. Bilgi: ${baglamMetni}`;
 
     try {
-        const out = await zedinYZEngine(sistemTalimati, {
-            max_new_tokens: 60,
-            temperature: 0.3 
+        const response = await fetch(HF_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                inputs: sistemTalimati,
+                parameters: { max_new_tokens: 60, temperature: 0.3 }
+            })
         });
-        return out[0].summary_text || "Yanıt oluşturulamadı.";
+
+        const result = await response.json();
+        
+        // Hugging Face bazen modeli uyandırmak için 503 dönebilir, o esnada yükleniyor uyarısı verelim
+        if (result.error && result.estimated_time) {
+            return "Yapay zeka bulut modeli uyanıyor, lütfen 5 saniye sonra tekrar aratın...";
+        }
+
+        return result[0]?.summary_text || "Bulut motorundan yanıt oluşturulamadı.";
     } catch (e) {
-        return "Lokal özetleme motoru bir hata ile karşılaştı.";
+        return "Yapay zeka API motoru bir hata ile karşılaştı.";
     }
 }
 
@@ -114,20 +130,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiStatus = document.createElement('div');
     aiStatus.id = "ai-status-bar";
     aiStatus.style = "position:fixed; top:0; left:0; width:100%; background:#f59e0b; color:white; text-align:center; font-size:12px; padding:8px; z-index:9999; font-family:sans-serif; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;";
-    aiStatus.innerText = "🧠 Zedin AI: Model arka planda yükleniyor (Lensler ve Puanlama Aktif)...";
+    aiStatus.innerText = "🧠 Zedin AI: Bulut API bağlantısı kuruluyor...";
     document.body.appendChild(aiStatus);
 
     zedinAI_Baslat().then(() => {
         if (ZedinAkılAyarları.modelYuklendimi) {
             aiStatus.style.background = "#16a34a"; 
-            aiStatus.innerText = "🧠 Zedin AI: Lokal Model Hazır! Test edebilirsin.";
+            aiStatus.innerText = "🧠 Zedin AI: Jet Hızında Bulut Motoru Hazır!";
             setTimeout(() => aiStatus.remove(), 4000);
         } else {
             aiStatus.style.background = "#dc2626"; 
             aiStatus.style.padding = "12px 8px";
             
             const hataDetayi = ZedinAkılAyarları.sonHataMesaji || "Bağlantı veya yükleme hatası.";
-            aiStatus.innerHTML = `⚠️ Zedin AI Modeli Yüklenemedi!<br><span style="font-weight:normal; font-size:10px; opacity:0.9; display:block; margin-top:4px; word-break:break-all;">Hata: ${hataDetayi}</span><br><span style="font-size:11px; color:#fef08a;">[Lens filtreleri ve Sıralama şu an sorunsuz çalışıyor, test edebilirsin!]</span>`;
+            aiStatus.innerHTML = `⚠️ Zedin AI API Bağlantısı Kurulamadı!<br><span style="font-weight:normal; font-size:10px; opacity:0.9; display:block; margin-top:4px; word-break:break-all;">Hata: ${hataDetayi}</span><br><span style="font-size:11px; color:#fef08a;">[Lens filtreleri ve Sıralama şu an sorunsuz çalışıyor, test edebilirsin!]</span>`;
             
             setTimeout(() => aiStatus.remove(), 10000);
         }
