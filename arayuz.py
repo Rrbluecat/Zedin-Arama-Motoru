@@ -1,18 +1,17 @@
 import os
 import re
-import json
+import json                                             
 import glob
-import threading # 🚀 Otomasyon thread yönetimi için eklendi
+import threading # 🚀 Otomasyon thread yönetimi için eklendi                                                    
 from flask import Flask, request, render_template_string, redirect, url_for, abort, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from tarayici import link_ayıkla_ve_tarla
 
 app = Flask(__name__)
-
-# 🔒 [KORUMA] DDOS KORUMASI: İndeks çekme limitleri ayarlandı
+                                                        # 🔒 [KORUMA] DDOS KORUMASI: İndeks çekme limitleri ayarlandı                                                   
 limiter = Limiter(
-    get_remote_address,
+    get_remote_address,                                     
     app=app,
     default_limits=["50 per minute"],
     storage_uri="memory://"
@@ -23,7 +22,7 @@ KARA_LISTE_BOTLAR = ["sqlmap", "nikto", "dirbuster", "nmap", "python-requests"]
 @app.before_request
 def bot_kontrolu():
     user_agent = request.headers.get('User-Agent', '').lower()
-    if any(bot in user_agent for bot in KARA_LISTE_BOTLAR):
+    if any(bot in user_agent for bot in KARA_LISTE_BOTLAR):                                                             
         abort(403)
 
 # 🚀 [YENİ SHARDING SIFINIF MİMARİSİ]: RAM'deki listeyi bozmadan arka planda harflere ayıran akıllı liste nesnesi
@@ -46,34 +45,33 @@ class ShardedIndexList(list):
             if harf not in self.shards: self.shards[harf] = []
             if item not in self.shards[harf]: self.shards[harf].append(item)
 
-# 🚀 Sunucu başlarken tüm sharded disk dosyalarını RAM'e toplar
-ARAMA_INDEKSI = ShardedIndexList()
-
+# 🚀 Sunucu başlarken tüm sharded disk dosyalarını RAM'e toplar                                                 
+ARAMA_INDEKSI = ShardedIndexList()                      
 for dosya in glob.glob("arama_indeksi_*.json"):
     try:
         with open(dosya, "r", encoding="utf-8") as f:
             for v in json.load(f):
-                ARAMA_INDEKSI.append(v)
-    except:
+                ARAMA_INDEKSI.append(v)                     
+    except:                                                     
         pass
 
 if os.path.exists("arama_indeksi.json"):
     try:
-        with open("arama_indeksi.json", "r", encoding="utf-8") as f:
+        with open("arama_indeksi.json", "r", encoding="utf-8") as f:                                                        
             for v in json.load(f):
                 if v not in ARAMA_INDEKSI: ARAMA_INDEKSI.append(v)
         print(f"[*] Başarıyla {len(ARAMA_INDEKSI)} döküman belleğe yüklendi.")
-    except Exception as e:
+    except Exception as e:                                      
         print(f"[!] İndeks okunurken hata oluştu: {e}")
-
-HTML_SABLON = """
+                                                        
+HTML_SABLON = """                                       
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr">                                        
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zedin Arama Ekosistemi</title>
-    <style>
+    <title>Zedin Arama Ekosistemi</title>                   
+    <style>                                                     
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg: #f9f9f8;
@@ -84,39 +82,39 @@ HTML_SABLON = """
             --border: #e5e7eb;
             --card: #ffffff;
             --hover: #f3f4f6;
-            --url-color: #16a34a;
+            --url-color: #16a34a;                                   
             --shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
+        }                                                       
         /* 🌗 KOYU TEMA DEĞİŞKENLERİ */
-        body.dark-theme {
+        body.dark-theme {                                           
             --bg: #111827;
             --text: #f9fafb;
-            --muted: #9ca3af;
-            --accent: #a78bfa;
+            --muted: #9ca3af;                                       
+            --accent: #a78bfa;                                      
             --accent-light: #c084fc;
-            --border: #374151;
+            --border: #374151;                                      
             --card: #1f2937;
             --hover: #374151;
             --url-color: #4ade80;
             --shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
+        }                                                       
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;               
+            background: var(--bg);                                  
             color: var(--text);
-            min-height: 100vh;
+            min-height: 100vh;                                      
             transition: background 0.2s, color 0.2s;
         }
         /* GÖRÜNÜM KONTROLLERİ */
         .gizli { display: none !important; }
 
         /* TEMA DEĞİŞTİRME BUTONU VE NAVİGASYON */
-        .top-right-nav { position: absolute; top: 20px; right: 24px; display: flex; gap: 12px; align-items: center; }
+        .top-right-nav { position: absolute; top: 20px; right: 24px; display: flex; gap: 12px; align-items: center; }                                                           
         .theme-toggle {
             background: transparent; border: 1px solid var(--border);
             color: var(--text); padding: 7px 14px; border-radius: 20px;
-            cursor: pointer; font-size: 13px; font-weight: 500;
-            transition: all 0.15s;
+            cursor: pointer; font-size: 13px; font-weight: 500;                                                             
+            transition: all 0.15s;                              
         }
         .theme-toggle:hover { background: var(--hover); border-color: var(--accent); }
 
@@ -135,13 +133,18 @@ HTML_SABLON = """
             color: var(--accent);
             letter-spacing: -3px;
             margin-bottom: 32px;
-        }
+        }                                                       
         .home-search { width: 100%; max-width: 580px; text-align: center; }
 
+        /* 👓 LENS SEÇİCİ STİLLERİ */
+        .lens-container { display: flex; gap: 8px; margin: 16px 0; justify-content: center; }
+        .lens-btn { background: var(--card); border: 1.5px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+        .lens-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
         /* SONUÇ SAYFASI */
-        .results-header {
+        .results-header {                                           
             border-bottom: 1px solid var(--border);
-            background: var(--card);
+            background: var(--card);                                
             padding: 14px 24px;
             display: flex;
             align-items: center;
@@ -151,16 +154,16 @@ HTML_SABLON = """
             z-index: 100;
             box-shadow: var(--shadow);
         }
-        .results-logo {
+        .results-logo {                                             
             font-size: 22px;
-            font-weight: 800;
+            font-weight: 800;                                       
             color: var(--accent);
-            letter-spacing: -1.5px;
+            letter-spacing: -1.5px;                                 
             text-decoration: none;
             flex-shrink: 0;
-        }
+        }                                                       
         .results-body { max-width: 720px; margin: 0 auto; padding: 28px 24px; }
-
+                                                                
         /* ARAMA KUTUSU */
         .search-wrap {
             display: flex;
@@ -177,7 +180,7 @@ HTML_SABLON = """
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(91,33,182,0.12);
         }
-        .search-input {
+        .search-input {                                             
             flex: 1; border: none; background: transparent; font-size: 16px; color: var(--text); outline: none; min-width: 0;
         }
         .search-input::placeholder { color: #9ca3af; }
@@ -194,7 +197,7 @@ HTML_SABLON = """
             border-radius: 12px; padding: 18px 20px; margin-bottom: 28px; box-shadow: var(--shadow);
         }
         .smart-answer-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .smart-answer-text { font-size: 18px; font-weight: 600; color: var(--text); }
+        .smart-answer-text { font-size: 16px; font-weight: 500; color: var(--text); }
         .result-item { padding: 18px 0; border-bottom: 1px solid var(--border); }
         .result-item:last-child { border-bottom: none; }
         .result-domain { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
@@ -203,34 +206,35 @@ HTML_SABLON = """
         .result-title { font-size: 19px; font-weight: 600; margin-bottom: 5px; line-height: 1.3; }
         .result-title a { color: #1d4ed8; text-decoration: none; }
         body.dark-theme .result-title a { color: #60a5fa; }
-        .result-title a:hover { text-decoration: underline; }
+        .result-title a:hover { text-decoration: underline; }                                                           
         .result-snippet { font-size: 14px; color: #374151; line-height: 1.6; }
-        body.dark-theme .result-snippet { color: #d1d5db; }
+        body.dark-theme .result-snippet { color: #d1d5db; }                                                             
         .no-result { text-align: center; padding: 60px 20px; color: var(--muted); }
-        .no-result-icon { font-size: 40px; margin-bottom: 12px; }
+        .no-result-icon { font-size: 40px; margin-bottom: 12px; }                                                       
         .no-result-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 
-        /* HİBRİT PANEL GRUPLARI */
+        /* HİBRİT PANEL GRUPLARI */                             
         .admin-section { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
         .admin-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; margin-top: 16px; }
         .admin-form { display: flex; gap: 8px; margin-bottom: 16px; }
-        .admin-grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .admin-grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }               
         .admin-input { flex: 1; border: 1.5px solid var(--border); background: var(--card); padding: 9px 14px; border-radius: 8px; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
-        .admin-input:focus { border-color: var(--accent); }
+        .admin-input:focus { border-color: var(--accent); }                                                             
         .admin-btn { background: var(--text); color: white; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
         body.dark-theme .admin-btn { background: var(--accent); color: #111827; }
         .admin-btn:hover { opacity: 0.8; }
         .yerel-btn { background: var(--accent); color: white !important; }
-        
+                                                                
         /* 🔒 GİZLİLİK & KISAYOL LİSTESİ STİLLERİ */
         .privacy-card { background: var(--card); padding: 14px; border-radius: 8px; border: 1px dashed var(--border); display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
         .privacy-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
         .bang-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; margin-bottom: 16px; }
         .bang-badge { background: var(--hover); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
         .bang-del { color: #ef4444; cursor: pointer; font-weight: bold; }
-        
-        @media (max-width: 600px) { .results-header { padding: 12px 16px; gap: 12px; } .results-body { padding: 20px 16px; } .result-title { font-size: 17px; } .admin-grid-form { grid-template-columns: 1fr; } }
+
+        @media (max-width: 600px) { .results-header { padding: 12px 16px; gap: 12px; } .results-body { padding: 20px 16px; } .result-title { font-size: 17px; } .admin-grid-form { grid-template-columns: 1fr; } }                  
     </style>
+    <script src="/static/zedin_akil.js"></script>
 </head>
 <body>
 
@@ -240,13 +244,19 @@ HTML_SABLON = """
         </div>
         <div class="home-logo">Zedin.</div>
         <div class="home-search">
-            <form onsubmit="event.preventDefault(); yerelSorguGonder(this.q.value);">
+            <form onsubmit="event.preventDefault(); yerelSorguGonder(this.q.value);">                                           
                 <div class="search-wrap">
                     <input type="text" name="q" class="search-input" placeholder="Ara veya kısayolları (!w, !yt, !gh) kullan..." autocomplete="off" autofocus>
                     <button type="submit" class="search-btn">Ara</button>
                 </div>
             </form>
-            <div style="margin-top: 24px; font-size: 13px; color: var(--muted); letter-spacing: 0.5px;">
+            <div class="lens-container">
+                <button class="lens-btn active" data-lens="genel" onclick="lensDegistir('genel')">🌐 Genel</button>
+                <button class="lens-btn" data-lens="forum" onclick="lensDegistir('forum')">💬 Forum</button>
+                <button class="lens-btn" data-lens="kod" onclick="lensDegistir('kod')">💻 Kod</button>
+                <button class="lens-btn" data-lens="akademik" onclick="lensDegistir('akademik')">🎓 Akademik</button>
+            </div>
+            <div style="margin-top: 16px; font-size: 13px; color: var(--muted); letter-spacing: 0.5px;">
                 🔒 %100 Mahremiyet • Reklamsız • Takipçisiz • Lokal Kontrol
             </div>
         </div>
@@ -264,13 +274,30 @@ HTML_SABLON = """
             <button onclick="temaDegistir()" class="theme-toggle" id="btn-tema-results">🌙 Koyu Tema</button>
         </header>
         <div class="results-body">
+            <div class="lens-container" style="justify-content: flex-start; margin-top:0; margin-bottom:16px;">
+                <button class="lens-btn active" data-lens="genel" onclick="lensDegistir('genel')">🌐 Genel</button>
+                <button class="lens-btn" data-lens="forum" onclick="lensDegistir('forum')">💬 Forum</button>
+                <button class="lens-btn" data-lens="kod" onclick="lensDegistir('kod')">💻 Kod</button>
+                <button class="lens-btn" data-lens="akademik" onclick="lensDegistir('akademik')">🎓 Akademik</button>
+            </div>
+
             <div id="arama-metrikleri" class="metrics"></div>
             <div id="akilli-yanit-alani"></div>
             <div id="ana-sonuclar-alani"></div>
 
             <div class="admin-section">
+                <div class="admin-label">Kişisel Site Puanlama & Engelleme (Ranking)</div>
+                <form onsubmit="yerelSiteSkorEkle(event);" id="yerel-skor-formu">
+                    <div class="admin-grid-form">
+                        <input type="text" id="skor-domain" class="admin-input" placeholder="Örn: pinterest.com" required>
+                        <input type="number" id="skor-deger" class="admin-input" placeholder="Skor (Örn: 50 veya engellemek için -100)" required>
+                    </div>
+                    <button type="submit" class="admin-btn yerel-btn" style="margin-bottom:12px;">Site Puanını Ayarla</button>
+                </form>
+                <div id="kisisel-skor-alani" class="bang-list"></div>
+
                 <div class="admin-label">Lokal Gizlilik & Çerez Kontrolleri</div>
-                <div class="privacy-card">
+                <div class="privacy-card">                                  
                     <div class="privacy-row">
                         <span>Arama Geçmişini Cihazda Tutma (Sıfır İz)</span>
                         <input type="checkbox" id="chk-gecmis-yok" onchange="gizlilikAyariKaydet()">
@@ -292,41 +319,40 @@ HTML_SABLON = """
                 </form>
                 <div id="kisisel-bang-alani" class="bang-list"></div>
 
-                <div class="admin-label">Kişisel Tarayıcı Hafızasına Ekle (IndexedDB)</div>
+                <div class="admin-label">Kişisel Tarayıcı Hafızasına Ekle (IndexedDB)</div>                                     
                 <form onsubmit="yerelHafizayaKaydet(event);" id="yerel-ekleme-formu">
                     <div class="admin-grid-form">
                         <input type="text" id="db-url" class="admin-input" placeholder="https://yerel-site.com" required>
                         <input type="text" id="db-baslik" class="admin-input" placeholder="Site Başlığı" required>
                     </div>
-                    <div class="admin-form">
+                    <div class="admin-form">                                    
                         <input type="text" id="db-icerik" class="admin-input" placeholder="Arama kelimeleri veya kısa site içeriği..." required>
                         <button type="submit" class="admin-btn yerel-btn">Tarayıcıya Göm</button>
                     </div>
                 </form>
-
+                                                                        
                 <div class="admin-label">Küresel Sunucu İndeksine Gönder (Railway)</div>
                 <form method="POST" action="/ekle" class="admin-form">
                     <input type="text" name="yeni_url" class="admin-input" placeholder="https://ornek.com.tr">
                     <button type="submit" class="admin-btn">Sunucuda Tara</button>
                 </form>
-            </div>
+            </div>                                              
         </div>
     </div>
 
     <script>
         let zedinHafizasi = [];
-        let yerelVeritabanı = null;
-
+        let yerelVeritabanı = null;                     
         // 🎯 VARYAYILAN GENİŞLETİLMİŞ KISAYOLLAR (BANGS)
         const varsayilanBangler = {
             '!w': 'https://tr.wikipedia.org/wiki/Special:Search?search=',
-            '!yt': 'https://www.youtube.com/results?search_query=',
+            '!yt': 'https://www.youtube.com/results?search_query=',                                                         
             '!g': 'https://www.google.com/search?q=',
-            '!gh': 'https://github.com/search?q=',
-            '!tr': 'https://translate.google.com/?sl=auto&tl=tr&text=',
+            '!gh': 'https://github.com/search?q=',                  
+            '!tr': 'https://translate.google.com/?sl=auto&tl=tr&text=',                                                     
             '!imdb': 'https://www.imdb.com/find?q='
-        };
-
+        };                                              
+        
         // 🌗 TEMA YÖNETİM FONKSİYONLARI
         function temaUygula(tema) {
             const btnHome = document.getElementById('btn-tema-home');
@@ -338,89 +364,85 @@ HTML_SABLON = """
             } else {
                 document.body.classList.remove('dark-theme');
                 if(btnHome) btnHome.innerText = '🌙 Koyu Tema';
-                if(btnResults) btnResults.innerText = '🌙 Koyu Tema';
+                if(btnResults) btnResults.innerText = ' 🌙 Koyu Tema';
             }
-        }
-
+        }                                               
         function temaDegistir() {
             let mevcut = localStorage.getItem('zedin-tema') || 'light';
-            let yeni = mevcut === 'light' ? 'dark' : 'light';
+            let yeni = mevcut === 'light' ? 'dark' : 'light';                                                               
             localStorage.setItem('zedin-tema', yeni);
             temaUygula(yeni);
         }
 
-        // 🔒 [YENİ] GİZLİLİK AYARLARINI YÜKLE VE KAYDET
+        // 🔒 GIZLILIK AYARLARINI YÜKLE VE KAYDET
         function gizlilikAyarlariniYukle() {
             document.getElementById('chk-gecmis-yok').checked = localStorage.getItem('zedin-gecmis-yok') === 'true';
             document.getElementById('chk-cerez-blok').checked = localStorage.getItem('zedin-cerez-blok') === 'true';
-        }
-
+        }                                               
         function gizlilikAyariKaydet() {
             const cerezBlok = document.getElementById('chk-cerez-blok').checked;
             const gecmisYok = document.getElementById('chk-gecmis-yok').checked;
-            
+
             localStorage.setItem('zedin-cerez-blok', cerezBlok);
             localStorage.setItem('zedin-gecmis-yok', gecmisYok);
-            
+
             if (cerezBlok) {
                 localStorage.removeItem('zedin-tema');
                 console.log("Lokal çerez kırıntıları donduruldu.");
             }
         }
 
-        function lokalVerileriSifirla() {
+        function lokalVerileriSifirla() {                           
             if(confirm("Tüm kişisel indekslerinizi, lokal ayarlarınızı ve kısayollarınızı silmek istediğinize emin misiniz?")) {
                 localStorage.clear();
-                if(yerelVeritabanı) {
+                if(yerelVeritabanı) {                                       
                     const req = indexedDB.deleteDatabase("ZedinYerelHafiza");
                     req.onsuccess = () => { alert("Lokal hafıza tamamen sıfırlandı!"); location.reload(); };
                 } else {
-                    location.reload();
+                    location.reload();                                  
                 }
             }
-        }
-
-        // 🎯 [YENİ] LOKAL DİNAMİK KISAYOL (BANG) MOTORU
-        function kisiselBangleriYukle() {
-            let kisisel = localStorage.getItem('zedin-kisisel-bangler');
+        }                                               
+        
+        // 🎯 LOKAL DİNAMİK KISAYOL (BANG) MOTORU
+        function kisiselBangleriYukle() {                           
+            let kisisel = localStorage.getItem('zedin-kisisel-bangler');                                                    
             return kisisel ? JSON.parse(kisisel) : {};
         }
 
         function kisiselBangListele() {
             const alan = document.getElementById('kisisel-bang-alani');
             alan.innerHTML = '';
-            
-            // Önce varsayılanları göster
-            Object.keys(varsayilanBangler).forEach(key => {
+
+            // Önce varsayılanları göster                           
+            Object.keys(varsayilanBangler).forEach(key => {                                                                     
                 alan.innerHTML += `<div class="bang-badge"><span>${key}</span><span style="color:var(--muted); font-size:10px;">Sistem</span></div>`;
-            });
-            
+            });                                         
             // Sonra kullanıcının eklediklerini göster
             const kisisel = kisiselBangleriYukle();
-            Object.keys(kisisel).forEach(key => {
+            Object.keys(kisisel).forEach(key => {                       
                 alan.innerHTML += `<div class="bang-badge"><span>${key}</span><span class="bang-del" onclick="yerelBangSil('${key}')">×</span></div>`;
             });
         }
 
-        function yerelBangEkle(e) {
+        function yerelBangEkle(e) {                                 
             e.preventDefault();
             let tetik = document.getElementById('bang-tetik').value.trim().toLowerCase();
             let hedef = document.getElementById('bang-hedef').value.trim();
-            
+
             if (!tetik.startsWith('!')) tetik = '!' + tetik;
-            
+
             if (varsayilanBangler[tetik]) {
                 alert("Bu sistem tarafından ayrılmış korumalı bir kısayoldur.");
                 return;
             }
-            
+
             let kisisel = kisiselBangleriYukle();
             kisisel[tetik] = hedef;
             localStorage.setItem('zedin-kisisel-bangler', JSON.stringify(kisisel));
-            document.getElementById('yerel-bang-formu').reset();
+            document.getElementById('yerel-bang-formu').reset();                                                            
             kisiselBangListele();
-        }
-
+        }                                               
         function yerelBangSil(key) {
             let kisisel = kisiselBangleriYukle();
             delete kisisel[key];
@@ -428,27 +450,89 @@ HTML_SABLON = """
             kisiselBangListele();
         }
 
+        // 👓 LENS DEĞİŞTİRME KÖPRÜSÜ
+        function lensDegistir(lensAdi) {
+            localStorage.setItem('zedin-aktif-lens', lensAdi);
+            if (typeof ZedinAkılAyarları !== 'undefined') {
+                ZedinAkılAyarları.aktifLens = lensAdi;
+            }
+            
+            // Tüm lens butonlarının aktifliğini senkronize et
+            document.querySelectorAll('.lens-btn').forEach(btn => {
+                if (btn.getAttribute('data-lens') === lensAdi) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Eğer üst arama çubuğunda halihazırda sorgu varsa otomatik olarak aramayı yenile
+            const mevcutSorgu = document.getElementById('ust-arama-input').value || document.querySelector('.home-search .search-input').value;
+            if (mevcutSorgu) {
+                yerelSorguGonder(mevcutSorgu);
+            }
+        }
+
+        // 🎯 LOKAL SITE PUANLAMA (RANKING) PANEL YÖNETİMİ
+        function kisiselSkorlariListele() {
+            const alan = document.getElementById('kisisel-skor-alani');
+            if(!alan) return;
+            alan.innerHTML = '';
+            if (typeof ZedinAkılAyarları !== 'undefined' && ZedinAkılAyarları.siteSkorları) {
+                Object.keys(ZedinAkılAyarları.siteSkorları).forEach(domain => {
+                    let skor = ZedinAkılAyarları.siteSkorları[domain];
+                    let etiket = skor <= -100 ? '❌ Engellendi' : `⭐ Skor: ${skor}`;
+                    alan.innerHTML += `<div class="bang-badge"><span>${domain} (${etiket})</span><span class="bang-del" onclick="yerelSiteSkorSil('${domain}')">×</span></div>`;
+                });
+            }
+        }
+
+        function yerelSiteSkorEkle(e) {
+            e.preventDefault();
+            const domain = document.getElementById('skor-domain').value.trim().toLowerCase();
+            const deger = parseInt(document.getElementById('skor-deger').value.trim());
+            if(!domain || isNaN(deger)) return;
+
+            if (typeof ZedinAkılAyarları !== 'undefined') {
+                ZedinAkılAyarları.siteSkorları[domain] = deger;
+                localStorage.setItem('zedin-site-skorlari', JSON.stringify(ZedinAkılAyarları.siteSkorları));
+            }
+            document.getElementById('yerel-skor-formu').reset();
+            kisiselSkorlariListele();
+            
+            const mevcutSorgu = document.getElementById('ust-arama-input').value;
+            if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
+        }
+
+        function yerelSiteSkorSil(domain) {
+            if (typeof ZedinAkılAyarları !== 'undefined' && ZedinAkılAyarları.siteSkorları[domain] !== undefined) {
+                delete ZedinAkılAyarları.siteSkorları[domain];
+                localStorage.setItem('zedin-site-skorlari', JSON.stringify(ZedinAkılAyarları.siteSkorları));
+            }
+            kisiselSkorlariListele();
+            
+            const mevcutSorgu = document.getElementById('ust-arama-input').value;
+            if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
+        }
+
         // 🗄️ Tarayıcı içi IndexedDB başlatıcı
         function yerelDBBaslat() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open("ZedinYerelHafiza", 1);
-
+                                                                        
                 request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
+                    const db = e.target.result;                             
                     if (!db.objectStoreNames.contains("siteler")) {
-                        db.createObjectStore("siteler", { autoIncrement: true });
+                        db.createObjectStore("siteler", { autoIncrement: true });                                                   
                     }
-                };
-
+                };                                      
                 request.onsuccess = (e) => {
                     yerelVeritabanı = e.target.result;
                     resolve(yerelVeritabanı);
-                };
-
+                };                                      
                 request.onerror = (e) => reject(e.target.error);
-            });
-        }
-
+            });                                                 
+        }                                               
         function yerelVerileriGetir() {
             return new Promise((resolve) => {
                 if (!yerelVeritabanı || localStorage.getItem('zedin-cerez-blok') === 'true') return resolve([]);
@@ -457,41 +541,47 @@ HTML_SABLON = """
                 const store = transaction.objectStore("siteler");
                 const istek = store.getAll();
 
-                istek.onsuccess = () => resolve(istek.result || []);
+                istek.onsuccess = () => resolve(istek.result || []);                                                            
                 istek.onerror = () => resolve([]);
             });
-        }
-
+        }                                               
         async function yerelHafizayaKaydet(e) {
             e.preventDefault();
             if(localStorage.getItem('zedin-cerez-blok') === 'true') {
                 alert("Lokal bellek kullanımı şu an ayarlardan tamamen engellenmiş durumda.");
-                return;
+                return;                                             
             }
-            
-            const url = document.getElementById("db-url").value.trim();
-            const baslik = document.getElementById("db-baslik").value.trim();
-            const icerik = document.getElementById("db-icerik").value.trim();
 
+            const url = document.getElementById("db-url").value.trim();
+            const baslik = document.getElementById("db-baslik").value.trim();                                               
+            const icerik = document.getElementById("db-icerik").value.trim();                                   
             if (!url || !baslik || !icerik) return;
             if (!yerelVeritabanı) { alert("Hata: Tarayıcı veritabanı hazır değil."); return; }
 
             const transaction = yerelVeritabanı.transaction("siteler", "readwrite");
             const store = transaction.objectStore("siteler");
             store.add([url, baslik, icerik]);
-
+                                                                    
             transaction.oncomplete = () => {
                 alert("🎉 Site sadece senin tarayıcına (IndexedDB) başarıyla kazındı!");
                 document.getElementById("yerel-ekleme-formu").reset();
-                const mevcutSorgu = document.getElementById('ust-arama-input').value;
+                const mevcutSorgu = document.getElementById('ust-arama-input').value;                                           
                 if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
-            };
+            };                                                  
         }
 
         async function indeksiIndir() {
             temaUygula(localStorage.getItem('zedin-tema') || 'light');
             gizlilikAyarlariniYukle();
             kisiselBangListele();
+            kisiselSkorlariListele();
+
+            // Kaydedilmiş olan aktit lensi arayüz butonlarında seçili hale getir
+            const kayitliLens = localStorage.getItem('zedin-aktif-lens') || 'genel';
+            document.querySelectorAll('.lens-btn').forEach(btn => {
+                if (btn.getAttribute('data-lens') === kayitliLens) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
 
             try {
                 await yerelDBBaslat();
@@ -501,7 +591,7 @@ HTML_SABLON = """
 
             try {
                 const response = await fetch('/api/indeks');
-                if (response.status === 429) {
+                if (response.status === 429) {                              
                     console.warn("DDoS koruması tetiklendi. İstekler sınırlandırıldı.");
                     return;
                 }
@@ -512,7 +602,7 @@ HTML_SABLON = """
                 if (q && localStorage.getItem('zedin-gecmis-yok') !== 'true') {
                     yerelSorguGonder(q);
                 }
-            } catch (err) {
+            } catch (err) {                                             
                 console.error("İndeks yükleme hatası:", err);
             }
         }
@@ -531,8 +621,8 @@ HTML_SABLON = """
         }
 
         function snippetKontrol(sorgu) {
-            if (/^[0-9\\s\\+\\-\\*\\/\\(\\)\\.]+$/.test(sorgu)) {
-                try { return `${sorgu} = ${eval(sorgu)}`; } catch { return null; }
+            if (/^[0-9\\s\\+\\-\\*\\/\\(\\)\\.]+$/.test(sorgu)) {                                                               
+                try { return `${sorgu} = ${eval(sorgu)}`; } catch { return null; }                                          
             }
             const low = sorgu.toLowerCase();
             if (["sa", "selam", "merhaba"].includes(low)) { return "Merhaba! Zedin Arama Motoruna hoş geldiniz."; }
@@ -540,93 +630,113 @@ HTML_SABLON = """
         }
 
         function alakaliMi(sorguKelimeleri, baslik, icerik) {
-            const birlesikMetin = (baslik + " " + icerik).toLowerCase();
+            const birlesikMetin = (baslik + " " + icerik).toLowerCase();                                                    
             for (let kelime of sorguKelimeleri) {
-                if (kelime.length > 2 && !birlesikMetin.includes(kelime)) return false;
+                if (kelime.length > 2 && !birlesikMetin.includes(kelime)) return false;                                     
             }
             return true;
         }
 
         async function yerelSorguGonder(sorgu) {
-            sorgu = sorgu.trim();
+            sorgu = sorgu.trim();                                   
             if (!sorgu) return;
 
             // 🎯 Gelişmiş Dinamik Kısayol (Bang) Kontrolü
             const tümBangler = { ...varsayilanBangler, ...kisiselBangleriYukle() };
             const parcalar = sorgu.split(' ');
             const ilkKelime = parcalar[0].toLowerCase();
-            
+
             if (tümBangler[ilkKelime]) {
                 const geriyeKalan = sorgu.substring(parcalar[0].length).trim();
                 window.location.href = tümBangler[ilkKelime] + encodeURIComponent(geriyeKalan);
                 return;
             }
 
-            // Gizlilik ayarı: Cihazda geçmiş tutulmuyorsa URL'e pushState atma
-            if (localStorage.getItem('zedin-gecmis-yok') !== 'true') {
+            if (localStorage.getItem('zedin-gecmis-yok') !== 'true') {                                                          
                 window.history.pushState({}, '', '?q=' + encodeURIComponent(sorgu));
             }
-            
+                                                                    
             document.getElementById('ust-arama-input').value = sorgu;
-            ekranDegistir(true);
-
+            ekranDegistir(true);                        
+            
             try {
                 let harf = "diger";
-                if (sorgu.length > 0) {
+                if (sorgu.length > 0) {                                     
                     let ilk = sorgu.charAt(0).toLowerCase();
-                    const mapping = {'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u'};
+                    const mapping = {'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u'};                                   
                     ilk = mapping[ilk] || ilk;
                     if (/^[a-z0-9]$/.test(ilk)) { harf = ilk; }
-                }
+                }                                                       
                 const shardRes = await fetch('/api/indeks?harf=' + harf);
                 if (shardRes.ok) {
-                    const shardVerisi = await shardRes.json();
+                    const shardVerisi = await shardRes.json();                                                                      
                     shardVerisi.forEach(item => {
                         if (!zedinHafizasi.some(x => x[0] === item[0])) { zedinHafizasi.push(item); }
-                    });
+                    });                                                 
                 }
-            } catch(err) { console.error("Shard yükleme hatası:", err); }
-
+            } catch(err) { console.error("Shard yükleme hatası:", err); }                                       
+            
             const t0 = performance.now();
-            let sonuclar = [];
-
+            let sonuclar = [];                                                                                              
             const hızlıYanit = snippetKontrol(sorgu);
             const akilliAlan = document.getElementById('akilli-yanit-alani');
+            
+            // 🧠 YAPAY ZEKA VE STATİK HIZLI YANIT KÖPRÜSÜ ENJEKSİYONU
             if (hızlıYanit) {
-                akilliAlan.innerHTML = `<div class="smart-answer"><div class="smart-answer-label">Hızlı Yanıt</div><div class="smart-answer-text">${hızlıYanit}</div></div>`;
+                akilliAlan.innerHTML = `<div class="smart-answer"><div class="smart-answer-label">Hızlı Yanıt</div><div class="smart-answer-text">${hızlıYanit}</div></div>`;                                                               
             } else {
-                akilliAlan.innerHTML = '';
+                akilliAlan.innerHTML = '';                          
             }
 
-            const yerelKisiselSiteler = await yerelVerileriGetir();
+            const yerelKisiselSiteler = await yerelVerileriGetir();                                                         
             const tamAramaHavuzu = [...zedinHafizasi, ...yerelKisiselSiteler];
+            
+            // 👓 [AKIL MOTORU ENTEGRASYONU]: Havuzu lens ve kişisel site skorlamasına (Ranking) sokuyoruz
+            let filtrelenmisHavuz = [];
+            if (typeof zedinSkorlaVeFiltrele === 'function') {
+                filtrelenmisHavuz = zedinSkorlaVeFiltrele(tamAramaHavuzu);
+            } else {
+                filtrelenmisHavuz = tamAramaHavuzu.map(s => ({ sayfa: s, kisiselSkor: 0 }));
+            }
+
             const sorguKelimeleri = sorgu.split(/\\s+/).map(k => k.toLowerCase()).filter(k => k.length > 1);
-
-            if (sorguKelimeleri.length > 0 && !hızlıYanit) {
-                for (let sayfa of tamAramaHavuzu) {
-                    const url = sayfa[0] || ""; const baslik = sayfa[1] || ""; const icerik = sayfa[2] || "";
-
+                                                                    
+            if (sorguKelimeleri.length > 0) {
+                for (let item of filtrelenmisHavuz) {                         
+                    const url = item.sayfa[0] || ""; const baslik = item.sayfa[1] || ""; const icerik = item.sayfa[2] || "";   
                     if (alakaliMi(sorguKelimeleri, baslik, icerik)) {
-                        let skor = 0;
+                        // Aramanın taban skoru kullanıcının atadığı kişisel puanlama ile başlar!
+                        let skor = item.kisiselSkor;                                           
                         for (let kelime of sorguKelimeleri) {
-                            if (baslik.toLowerCase().includes(kelime)) skor += 10;
+                            if (baslik.toLowerCase().includes(kelime)) skor += 10;                                                          
                             if (icerik.toLowerCase().includes(kelime)) skor += 2;
                         }
-                        sonuclar.push({ sayfa, skor });
+                        sonuclar.push({ sayfa: item.sayfa, skor });
                     }
                 }
                 sonuclar.sort((a, b) => b.skor - a.skor);
             }
 
-            const t1 = performance.now();
+            // 🧠 LOKAL YAPAY ZEKA TETİKLEYİCİSİ (Eğer statik hızlı yanıt yoksa ve sonuç bulunduysa)
+            if (!hızlıYanit && typeof zedinAI_HizliYanitUret === 'function' && sonuclar.length > 0) {
+                akilliAlan.innerHTML = `<div class="smart-answer"><div class="smart-answer-label">🧠 Zedin AI Özetliyor...</div><div class="smart-answer-text" id="zedin-ai-loading" style="font-size:14px; font-weight:normal; color:var(--muted);">Düşünce zinciri kuruluyor, lokal model çalışıyor...</div></div>`;
+                zedinAI_HizliYanitUret(sorgu, sonuclar).then(aiYanit => {
+                    const loadingEl = document.getElementById('zedin-ai-loading');
+                    if(loadingEl) {
+                        loadingEl.parentElement.innerHTML = `<div class="smart-answer-label">🧠 Zedin AI Yanıtı</div><div class="smart-answer-text" style="font-size:15px; font-weight:normal; line-height:1.5;">${aiYanit}</div>`;
+                    }
+                });
+            }
+
+            const t1 = performance.now();                           
             const aramaSuresi = ((t1 - t0) / 1000).toFixed(3);
 
-            document.getElementById('arama-metrikleri').innerHTML = `${sonuclar.length} sonuç &mdash; ${aramaSuresi} saniye`;
+            document.getElementById('arama-metrikleri').innerHTML = `${sonuclar.length} sonuç — ${aramaSuresi} saniye`;
             const sonuclarAlani = document.getElementById('ana-sonuclar-alani');
             sonuclarAlani.innerHTML = '';
 
             const hamSonuclar = sonuclar.map(s => s.sayfa).slice(0, 20);
-
+                                                                    
             if (hamSonuclar.length > 0) {
                 hamSonuclar.forEach(satir => {
                     const div = document.createElement('div');
@@ -636,7 +746,7 @@ HTML_SABLON = """
                             <img class="result-favicon" src="https://www.google.com/s2/favicons?domain=${satir[0]}&sz=16" onerror="this.style.display='none'">
                             <span class="result-url-text">${satir[0]}</span>
                         </div>
-                        <h3 class="result-title"><a href="${satir[0]}" target="_blank" rel="noopener">${satir[1]}</a></h3>
+                        <h3 class="result-title"><a href="${satir[0]}" target="_blank" rel="noopener">${satir[1]}</a></h3>                                                                      
                         <p class="result-snippet">${satir[2]}...</p>
                     `;
                     sonuclarAlani.appendChild(div);
@@ -646,20 +756,20 @@ HTML_SABLON = """
             }
         }
 
-        window.onload = indeksiIndir;
+        window.onload = indeksiIndir;                       
     </script>
-</body>
+</body>                                                 
 </html>
 """
 
-@app.route("/")
+@app.route("/")                                         
 def ara():
     return render_template_string(HTML_SABLON)
 
-# 🚀 [YENİ ULTRA SHARD API]: İstek harf içeriyorsa sadece o harfe ait hafifletilmiş paketi fırlatır!
+# 🚀 [YENİ ULTRA SHARD API]: İstek harf içeriyorsa sadece o harfe ait hafifletilmiş paketi fırlatır!            
 @app.route("/api/indeks")
 def api_indeks():
-    harf = request.args.get("harf", "").lower()
+    harf = request.args.get("harf", "").lower()             
     if harf and hasattr(ARAMA_INDEKSI, 'shards'):
         return jsonify(ARAMA_INDEKSI.shards.get(harf, []))
     return jsonify(ARAMA_INDEKSI)
@@ -668,7 +778,7 @@ def api_indeks():
 @limiter.limit("3 per minute")
 def ekle():
     hedef_url = request.form.get("yeni_url", "").strip()
-    if hedef_url:
+    if hedef_url:                                               
         link_ayıkla_ve_tarla(hedef_url, max_sayfa=50)
     return redirect(url_for("ara"))
 
