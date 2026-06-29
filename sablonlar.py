@@ -1,0 +1,635 @@
+# Zedin Arama Ekosistemi - Gelişmiş Kişiselleştirilebilir Arayüz Şablonu
+
+HTML_SABLON = """<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zedin Arama Ekosistemi</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* 🎛️ KAGI TARZI DİNAMİK CSS DEĞİŞKENLERİ */
+        :root {
+            --bg: #f9f9f8;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --accent: #5b21b6;
+            --accent-light: #7c3aed;
+            --border: #e5e7eb;
+            --card: #ffffff;
+            --hover: #f3f4f6;
+            --url-color: #16a34a;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            
+            /* Dinamik Değişkenler (JS ile değişir) */
+            --zedin-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --result-padding: 18px;
+            --title-size: 19px;
+            --snippet-display: block;
+            --favicon-display: inline-block;
+        }
+
+        body.dark-theme {
+            --bg: #111827;
+            --text: #f9fafb;
+            --muted: #9ca3af;
+            --accent: #a78bfa;
+            --accent-light: #c084fc;
+            --border: #374151;
+            --card: #1f2937;
+            --hover: #374151;
+            --url-color: #4ade80;
+            --shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: var(--zedin-font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
+        }
+        
+        .gizli { display: none !important; }
+        .top-right-nav { position: absolute; top: 20px; right: 24px; display: flex; gap: 12px; align-items: center; }
+        
+        .theme-toggle {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text); padding: 7px 14px; border-radius: 20px;
+            cursor: pointer; font-size: 13px; font-weight: 500;
+            transition: all 0.15s;
+        }
+        .theme-toggle:hover { background: var(--hover); border-color: var(--accent); }
+        
+        .home-page {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+        }
+        .home-logo {
+            font-size: 52px; font-weight: 800;
+            color: var(--accent); letter-spacing: -3px; margin-bottom: 32px;
+        }
+        .home-search { width: 100%; max-width: 580px; text-align: center; }
+        
+        .lens-container { display: flex; gap: 8px; margin: 16px 0; justify-content: center; }
+        .lens-btn { background: var(--card); border: 1.5px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+        .lens-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        .results-header {
+            border-bottom: 1px solid var(--border); background: var(--card);
+            padding: 14px 24px; display: flex; align-items: center; gap: 24px;
+            position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
+        }
+        .results-logo {
+            font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -1.5px;
+            text-decoration: none; flex-shrink: 0;
+        }
+        .results-body { max-width: 720px; margin: 0 auto; padding: 28px 24px; }
+        
+        .search-wrap {
+            display: flex; align-items: center; background: var(--card); border: 1.5px solid var(--border); border-radius: 24px;
+            padding: 8px 8px 8px 18px; gap: 8px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: var(--shadow);
+        }
+        .search-wrap:focus-within {
+            border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,33,182,0.12);
+        }
+        .search-input { flex: 1; border: none; background: transparent; font-size: 16px; color: var(--text); outline: none; min-width: 0; }
+        .search-input::placeholder { color: #9ca3af; }
+        .search-btn {
+            background: var(--accent); color: white; border: none; padding: 9px 22px; border-radius: 18px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+        }
+        .search-btn:hover { background: var(--accent-light); }
+        
+        .metrics { font-size: 13px; color: var(--muted); margin: 16px 0 24px; }
+        
+        .smart-answer {
+            background: var(--card); border: 1.5px solid #ddd6fe; border-left: 4px solid var(--accent);
+            border-radius: 12px; padding: 18px 20px; margin-bottom: 28px; box-shadow: var(--shadow);
+        }
+        .smart-answer-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .smart-answer-text { font-size: 16px; font-weight: 500; color: var(--text); }
+        
+        /* 🗒️ SONUÇ KARTLARINDA SEÇENEK UYGULAMALARI */
+        .result-item { padding: var(--result-padding) 0; border-bottom: 1px solid var(--border); }
+        .result-item:last-child { border-bottom: none; }
+        .result-domain { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .result-favicon { width: 16px; height: 16px; border-radius: 3px; background: var(--border); display: var(--favicon-display); }
+        .result-url-text { font-size: 13px; color: var(--url-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
+        .result-title { font-size: var(--title-size); font-weight: 600; margin-bottom: 5px; line-height: 1.3; }
+        .result-title a { color: #1d4ed8; text-decoration: none; }
+        body.dark-theme .result-title a { color: #60a5fa; }
+        .result-title a:hover { text-decoration: underline; }
+        .result-snippet { font-size: 14px; color: #374151; line-height: 1.6; display: var(--snippet-display); }
+        body.dark-theme .result-snippet { color: #d1d5db; }
+        
+        .no-result { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .no-result-icon { font-size: 40px; margin-bottom: 12px; }
+        .no-result-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+        
+        .admin-section { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+        .admin-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; margin-top: 16px; }
+        .admin-form { display: flex; gap: 8px; margin-bottom: 16px; }
+        .admin-grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .admin-input { flex: 1; border: 1.5px solid var(--border); background: var(--card); padding: 9px 14px; border-radius: 8px; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+        .admin-input:focus { border-color: var(--accent); }
+        .admin-btn { background: var(--text); color: white; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        body.dark-theme .admin-btn { background: var(--accent); color: #111827; }
+        .admin-btn:hover { opacity: 0.8; }
+        .yerel-btn { background: var(--accent); color: white !important; }
+        
+        .privacy-card { background: var(--card); padding: 14px; border-radius: 8px; border: 1px dashed var(--border); display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .privacy-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+        .bang-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; margin-bottom: 16px; }
+        .bang-badge { background: var(--hover); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+        .bang-del { color: #ef4444; cursor: pointer; font-weight: bold; }
+        @media (max-width: 600px) { .results-header { padding: 12px 16px; gap: 12px; } .results-body { padding: 20px 16px; } .result-title { font-size: 17px; } .admin-grid-form { grid-template-columns: 1fr; } }
+    </style>
+    <script src="/static/zedin_akil.js"></script>
+</head>
+<body>
+    <div id="ana-sayfa-ekrani" class="home-page">
+        <div class="top-right-nav">
+            <button onclick="temaDegistir()" class="theme-toggle" id="btn-tema-home">🌙 Koyu Tema</button>
+        </div>
+        <div class="home-logo">Zedin.</div>
+        <div class="home-search">
+            <form onsubmit="event.preventDefault(); yerelSorguGonder(this.q.value);">
+                <div class="search-wrap">
+                    <input type="text" name="q" class="search-input" placeholder="Ara veya kısayolları (!w, !yt, !gh) kullan..." autocomplete="off" autofocus>
+                    <button type="submit" class="search-btn">Ara</button>
+                </div>
+            </form>
+            <div class="lens-container">
+                <button class="lens-btn active" data-lens="genel" onclick="lensDegistir('genel')">🌐 Genel</button>
+                <button class="lens-btn" data-lens="forum" onclick="lensDegistir('forum')">💬 Forum</button>
+                <button class="lens-btn" data-lens="kod" onclick="lensDegistir('kod')">💻 Kod</button>
+                <button class="lens-btn" data-lens="akademik" onclick="lensDegistir('akademik')">🎓 Akademik</button>
+            </div>
+            <div style="margin-top: 16px; font-size: 13px; color: var(--muted); letter-spacing: 0.5px;">🔒 %100 Mahremiyet • Reklamsız • Takipçisiz • Lokal Kontrol</div>
+        </div>
+    </div>
+
+    <div id="sonuc-ekrani" class="gizli">
+        <header class="results-header">
+            <a href="/" onclick="event.preventDefault(); ekranDegistir(false);" class="results-logo">Zedin.</a>
+            <form onsubmit="event.preventDefault(); yerelSorguGonder(this.q.value);" style="flex:1; max-width:560px;">
+                <div class="search-wrap">
+                    <input type="text" name="q" id="ust-arama-input" class="search-input" autocomplete="off">
+                    <button type="submit" class="search-btn">Ara</button>
+                </div>
+            </form>
+            <button onclick="temaDegistir()" class="theme-toggle" id="btn-tema-results">🌙 Koyu Tema</button>
+        </header>
+        <div class="results-body">
+            <div class="lens-container" style="justify-content: flex-start; margin-top:0; margin-bottom:16px;">
+                <button class="lens-btn active" data-lens="genel" onclick="lensDegistir('genel')">🌐 Genel</button>
+                <button class="lens-btn" data-lens="forum" onclick="lensDegistir('forum')">💬 Forum</button>
+                <button class="lens-btn" data-lens="kod" onclick="lensDegistir('kod')">💻 Kod</button>
+                <button class="lens-btn" data-lens="akademik" onclick="lensDegistir('akademik')">🎓 Akademik</button>
+            </div>
+            <div id="arama-metrikleri" class="metrics"></div>
+            <div id="akilli-yanit-alani"></div>
+            <div id="ana-sonuclar-alani"></div>
+            
+            <div class="admin-section">
+                <div class="admin-label">Kagi Tarzı Arayüz Kişiselleştirme</div>
+                <div class="privacy-card">
+                    <div class="privacy-row">
+                        <span>Yazı Tipi Ailesi</span>
+                        <select id="sel-zedin-font" onchange="kagiAyariKaydet()" class="admin-input" style="max-width:180px; padding:4px;">
+                            <option value="sans-serif">Standart Sans-Serif</option>
+                            <option value="Georgia, serif">Klasik Kitap (Serif)</option>
+                            <option value="'Courier New', monospace">Yazılımcı (Monospace)</option>
+                        </select>
+                    </div>
+                    <div class="privacy-row">
+                        <span>Arama Yoğunluğu (Density)</span>
+                        <select id="sel-zedin-density" onchange="kagiAyariKaydet()" class="admin-input" style="max-width:180px; padding:4px;">
+                            <option value="normal">Normal (Standart)</option>
+                            <option value="compact">Sıkışık (Hızlı Tarama)</option>
+                            <option value="relaxed">Geniş (Rahat Okuma)</option>
+                        </select>
+                    </div>
+                    <div class="privacy-row">
+                        <span>Özel Vurgu Rengi (Accent)</span>
+                        <input type="color" id="col-zedin-accent" onchange="kagiAyariKaydet()" style="border:none; width:40px; height:25px; cursor:pointer;">
+                    </div>
+                    <div class="privacy-row">
+                        <span>Site İkonlarını (Favicon) Göster</span>
+                        <input type="checkbox" id="chk-zedin-favicon" onchange="kagiAyariKaydet()">
+                    </div>
+                    <div class="privacy-row">
+                        <span>Metin Özetlerini (Snippet) Göster</span>
+                        <input type="checkbox" id="chk-zedin-snippet" onchange="kagiAyariKaydet()">
+                    </div>
+                </div>
+
+                <div class="admin-label">Kişisel Site Puanlama & Engelleme (Ranking)</div>
+                <form onsubmit="yerelSiteSkorEkle(event);" id="yerel-skor-formu">
+                    <div class="admin-grid-form">
+                        <input type="text" id="skor-domain" class="admin-input" placeholder="Örn: pinterest.com" required>
+                        <input type="number" id="skor-deger" class="admin-input" placeholder="Skor (Örn: 50 veya engellemek için -100)" required>
+                    </div>
+                    <button type="submit" class="admin-btn yerel-btn" style="margin-bottom:12px;">Site Puanını Ayarla</button>
+                </form>
+                <div id="kisisel-skor-alani" class="bang-list"></div>
+                                           
+                <div class="admin-label">Lokal Gizlilik & Çerez Kontrolleri</div>
+                <div class="privacy-card">
+                    <div class="privacy-row">
+                        <span>Arama Geçmişini Cihazda Tutma (Sıfır İz)</span>
+                        <input type="checkbox" id="chk-gecmis-yok" onchange="gizlilikAyariKaydet()">
+                    </div>
+                    <div class="privacy-row">
+                        <span>Lokal Bellek ve Çerez Kırıntılarını Tamamen Blokla</span>
+                        <input type="checkbox" id="chk-cerez-blok" onchange="gizlilikAyariKaydet()">
+                    </div>
+                    <button onclick="lokalVerileriSifirla()" class="admin-btn" style="background:#ef4444; padding:6px 12px; font-size:11px; width:fit-content; margin-top:4px;">Tüm Lokal Hafızayı Temizle</button>
+                </div>
+                           
+                <div class="admin-label">Kişisel Kısayol (Bang) Yönetimi (Lokal)</div>
+                <form onsubmit="yerelBangEkle(event);" id="yerel-bang-formu">
+                    <div class="admin-grid-form">
+                        <input type="text" id="bang-tetik" class="admin-input" placeholder="Örn: !harita" required>
+                        <input type="text" id="bang-hedef" class="admin-input" placeholder="Örn: https://maps.google.com/?q=" required>
+                    </div>
+                    <button type="submit" class="admin-btn yerel-btn" style="margin-bottom:12px;">Yeni Kısayol Tanımla</button>
+                </form>
+                <div id="kisisel-bang-alani" class="bang-list"></div>
+                           
+                <div class="admin-label">Kişisel Tarayıcı Hafızasına Ekle (IndexedDB)</div>
+                <form onsubmit="yerelHafizayaKaydet(event);" id="yerel-ekleme-formu">
+                    <div class="admin-grid-form">
+                        <input type="text" id="db-url" class="admin-input" placeholder="https://yerel-site.com" required>
+                        <input type="text" id="db-baslik" class="admin-input" placeholder="Site Başlığı" required>
+                    </div>
+                    <div class="admin-form">
+                        <input type="text" id="db-icerik" class="admin-input" placeholder="Arama kelimeleri veya kısa site içeriği..." required>
+                        <button type="submit" class="admin-btn yerel-btn">Tarayıcıya Göm</button>
+                    </div>
+                </form>
+                                                                                                         
+                <div class="admin-label">Küresel Sunucu İndeksine Gönder (Railway)</div>
+                <form method="POST" action="/ekle" class="admin-form">
+                    <input type="text" name="yeni_url" class="admin-input" placeholder="https://ornek.com.tr">
+                    <button type="submit" class="admin-btn">Sunucuda Tara</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        let zedinHafizasi = [];
+        let yerelVeritabanı = null;
+        const varsayilanBangler = {
+            '!w': 'https://tr.wikipedia.org/wiki/Special:Search?search=',
+            '!yt': 'https://www.youtube.com/results?search_query=',
+            '!g': 'https://www.google.com/search?q=',
+            '!gh': 'https://github.com/search?q=',
+            '!tr': 'https://translate.google.com/?sl=auto&tl=tr&text=',
+            '!imdb': 'https://www.imdb.com/find?q='
+        };
+        
+        /* 🛠️ KAGI TARZI DİNAMİK AYAR MOTORU */
+        function kagiAyarlariniYukle() {
+            const font = localStorage.getItem('kagi-font') || 'sans-serif';
+            const density = localStorage.getItem('kagi-density') || 'normal';
+            const accent = localStorage.getItem('kagi-accent') || '#5b21b6';
+            const showFavicon = localStorage.getItem('kagi-favicon') !== 'false';
+            const showSnippet = localStorage.getItem('kagi-snippet') !== 'false';
+
+            document.getElementById('sel-zedin-font').value = font;
+            document.getElementById('sel-zedin-density').value = density;
+            document.getElementById('col-zedin-accent').value = accent;
+            document.getElementById('chk-zedin-favicon').checked = showFavicon;
+            document.getElementById('chk-zedin-snippet').checked = showSnippet;
+
+            const root = document.documentElement;
+            root.style.setProperty('--zedin-font', font);
+            root.style.setProperty('--accent', accent);
+            root.style.setProperty('--favicon-display', showFavicon ? 'inline-block' : 'none');
+            root.style.setProperty('--snippet-display', showSnippet ? 'block' : 'none');
+
+            if (density === 'compact') {
+                root.style.setProperty('--result-padding', '8px');
+                root.style.setProperty('--title-size', '16px');
+            } else if (density === 'relaxed') {
+                root.style.setProperty('--result-padding', '26px');
+                root.style.setProperty('--title-size', '22px');
+            } else {
+                root.style.setProperty('--result-padding', '18px');
+                root.style.setProperty('--title-size', '19px');
+            }
+        }
+
+        function kagiAyariKaydet() {
+            const font = document.getElementById('sel-zedin-font').value;
+            const density = document.getElementById('sel-zedin-density').value;
+            const accent = document.getElementById('col-zedin-accent').value;
+            const showFavicon = document.getElementById('chk-zedin-favicon').checked;
+            const showSnippet = document.getElementById('chk-zedin-snippet').checked;
+
+            localStorage.setItem('kagi-font', font);
+            localStorage.setItem('kagi-density', density);
+            localStorage.setItem('kagi-accent', accent);
+            localStorage.setItem('kagi-favicon', showFavicon);
+            localStorage.setItem('kagi-snippet', showSnippet);
+
+            kagiAyarlariniYukle();
+        }
+
+        function temaUygula(tema) {
+            const btnHome = document.getElementById('btn-tema-home');
+            const btnResults = document.getElementById('btn-tema-results');
+            if (tema === 'dark') {
+                document.body.classList.add('dark-theme');
+                if(btnHome) btnHome.innerText = '☀️ Açık Tema';
+                if(btnResults) btnResults.innerText = '☀️ Açık Tema';
+            } else {
+                document.body.classList.remove('dark-theme');
+                if(btnHome) btnHome.innerText = '🌙 Koyu Tema';
+                if(btnResults) btnResults.innerText = ' 🌙 Koyu Tema';
+            }
+        }
+        function temaDegistir() {
+            let mevcut = localStorage.getItem('zedin-tema') || 'light';
+            let yeni = mevcut === 'light' ? 'dark' : 'light';
+            localStorage.setItem('zedin-tema', yeni);
+            temaUygula(yeni);
+        }
+        function gizlilikAyarlariniYukle() {
+            document.getElementById('chk-gecmis-yok').checked = localStorage.getItem('zedin-gecmis-yok') === 'true';
+            document.getElementById('chk-cerez-blok').checked = localStorage.getItem('zedin-cerez-blok') === 'true';
+        }
+        function gizlilikAyariKaydet() {
+            const cerezBlok = document.getElementById('chk-cerez-blok').checked;
+            const gecmisYok = document.getElementById('chk-gecmis-yok').checked;
+            localStorage.setItem('zedin-cerez-blok', cerezBlok);
+            localStorage.setItem('zedin-gecmis-yok', gecmisYok);
+            if (cerezBlok) { localStorage.removeItem('zedin-tema'); localStorage.removeItem('kagi-accent'); }
+        }
+        function lokalVerileriSifirla() {
+            if(confirm("Tüm kişisel indekslerinizi, lokal ayarlarınızı ve kısayollarınızı silmek istediğinize emin misiniz?")) {
+                localStorage.clear();
+                if(yerelVeritabanı) {
+                    const req = indexedDB.deleteDatabase("ZedinYerelHafiza");
+                    req.onsuccess = () => { alert("Lokal hafıza tamamen sıfırlandı!"); location.reload(); };
+                } else { location.reload(); }
+            }
+        }
+        function kisiselBangleriYukle() {
+            let kisisel = localStorage.getItem('zedin-kisel-bangler');
+            return kisisel ? JSON.parse(kisisel) : {};
+        }
+        function kisiselBangListele() {
+            const alan = document.getElementById('kisisel-bang-alani');
+            if(!alan) return;
+            alan.innerHTML = '';
+            Object.keys(varsayilanBangler).forEach(key => {
+                alan.innerHTML += `<div class="bang-badge"><span>${key}</span><span style="color:var(--muted); font-size:10px;">Sistem</span></div>`;
+            });
+            const kisisel = kisiselBangleriYukle();
+            Object.keys(kisisel).forEach(key => {
+                alan.innerHTML += `<div class="bang-badge"><span>${key}</span><span class="bang-del" onclick="yerelBangSil('${key}')">×</span></div>`;
+            });
+        }
+        function yerelBangEkle(e) {
+            e.preventDefault();
+            let tetik = document.getElementById('bang-tetik').value.trim().toLowerCase();
+            let hedon = document.getElementById('bang-hedef').value.trim();
+            if (!tetik.startsWith('!')) tetik = '!' + tetik;
+            if (varsayilanBangler[tetik]) { alert("Bu korumalı bir kısayoldur."); return; }
+            let kisisel = kisiselBangleriYukle();
+            kisisel[tetik] = hedon;
+            localStorage.setItem('zedin-kisel-bangler', JSON.stringify(kisisel));
+            document.getElementById('yerel-bang-formu').reset();
+            kisiselBangListele();
+        }
+        function yerelBangSil(key) {
+            let kisisel = kisiselBangleriYukle();
+            delete kisisel[key];
+            localStorage.setItem('zedin-kisel-bangler', JSON.stringify(kisisel));
+            kisiselBangListele();
+        }
+        function lensDegistir(lensAdi) {
+            localStorage.setItem('zedin-aktif-lens', lensAdi);
+            if (typeof ZedinAkılAyarları !== 'undefined') { ZedinAkılAyarları.aktifLens = lensAdi; }
+            document.querySelectorAll('.lens-btn').forEach(btn => {
+                if (btn.getAttribute('data-lens') === lensAdi) { btn.classList.add('active'); }
+                else { btn.classList.remove('active'); }
+            });
+            const mevcutSorgu = document.getElementById('ust-arama-input').value || document.querySelector('.home-search .search-input').value;
+            if (mevcutSorgu) { yerelSorguGonder(mevcutSorgu); }
+        }
+        function kisiselSkorlariListele() {
+            const alan = document.getElementById('kisisel-skor-alani');
+            if(!alan) return;
+            alan.innerHTML = '';
+            if (typeof ZedinAkılAyarları !== 'undefined' && ZedinAkılAyarları.siteSkorları) {
+                Object.keys(ZedinAkılAyarları.siteSkorları).forEach(domain => {
+                    let skor = ZedinAkılAyarları.siteSkorları[domain];
+                    let etiket = skor <= -100 ? '❌ Engellendi' : `⭐ Skor: ${skor}`;
+                    alan.innerHTML += `<div class="bang-badge"><span>${domain} (${etiket})</span><span class="bang-del" onclick="yerelSiteSkorSil('${domain}')">×</span></div>`;
+                });
+            }
+        }
+        function yerelSiteSkorEkle(e) {
+            e.preventDefault();
+            const domain = document.getElementById('skor-domain').value.trim().toLowerCase();
+            const deger = parseInt(document.getElementById('skor-deger').value.trim());
+            if(!domain || isNaN(deger)) return;
+            if (typeof ZedinAkılAyarları !== 'undefined') {
+                ZedinAkılAyarları.siteSkorları[domain] = deger;
+                localStorage.setItem('zedin-site-skorlari', JSON.stringify(ZedinAkılAyarları.siteSkorları));
+            }
+            document.getElementById('yerel-skor-formu').reset();
+            kisiselSkorlariListele();
+            const mevcutSorgu = document.getElementById('ust-arama-input').value;
+            if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
+        }
+        function yerelSiteSkorSil(domain) {
+            if (typeof ZedinAkılAyarları !== 'undefined' && ZedinAkılAyarları.siteSkorları[domain] !== undefined) {
+                delete ZedinAkılAyarları.siteSkorları[domain];
+                localStorage.setItem('zedin-site-skorlari', JSON.stringify(ZedinAkılAyarları.siteSkorları));
+            }
+            kisiselSkorlariListele();
+            const mevcutSorgu = document.getElementById('ust-arama-input').value;
+            if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
+        }
+        function yerelDBBaslat() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("ZedinYerelHafiza", 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("siteler")) { db.createObjectStore("siteler", { autoIncrement: true }); }
+                };
+                request.onsuccess = (e) => { yerelVeritabanı = e.target.result; resolve(yerelVeritabanı); };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+        function yerelVerileriGetir() {
+            return new Promise((resolve) => {
+                if (!yerelVeritabanı || localStorage.getItem('zedin-cerez-blok') === 'true') return resolve([]);
+                const transaction = yerelVeritabanı.transaction("siteler", "readonly");
+                const store = transaction.objectStore("siteler");
+                const istek = store.getAll();
+                istek.onsuccess = () => resolve(istek.result || []);
+                istek.onerror = () => resolve([]);
+            });
+        }
+        async function yerelHafizayaKaydet(e) {
+            e.preventDefault();
+            if(localStorage.getItem('zedin-cerez-blok') === 'true') { alert("Lokal bellek kullanımı engellenmiş."); return; }
+            const url = document.getElementById("db-url").value.trim();
+            const baslik = document.getElementById("db-baslik").value.trim();
+            const icerik = document.getElementById("db-icerik").value.trim();
+            if (!url || !baslik || !icerik) return;
+            if (!yerelVeritabanı) { alert("Hata: Tarayıcı veritabanı hazır değil."); return; }
+            const transaction = yerelVeritabanı.transaction("siteler", "readwrite");
+            const store = transaction.objectStore("siteler");
+            store.add([url, baslik, icerik]);
+            transaction.oncomplete = () => {
+                alert("🎉 Tarayıcı veritabanına gömüldü!");
+                document.getElementById("yerel-ekleme-formu").reset();
+                const mevcutSorgu = document.getElementById('ust-arama-input').value;
+                if (mevcutSorgu) yerelSorguGonder(mevcutSorgu);
+            };
+        }
+        async function indeksiIndir() {
+            temaUygula(localStorage.getItem('zedin-tema') || 'light');
+            kagiAyarlariniYukle(); /* Kagi motorunu uyandır */
+            gizlilikAyarlariniYukle();
+            kisiselBangListele();
+            kisiselSkorlariListele();
+            const kayitliLens = localStorage.getItem('zedin-aktif-lens') || 'genel';
+            document.querySelectorAll('.lens-btn').forEach(btn => {
+                if (btn.getAttribute('data-lens') === kayitliLens) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            try { await yerelDBBaslat(); } catch (err) { console.error("IndexedDB başlatılamadı:", err); }
+            try {
+                const response = await fetch('/api/indeks');
+                if (response.status === 429) { return; }
+                zedinHafizasi = await response.json();
+                const urlParams = new URLSearchParams(window.location.search);
+                const q = urlParams.get('q');
+                if (q && localStorage.getItem('zedin-gecmis-yok') !== 'true') { yerelSorguGonder(q); }
+            } catch (err) { console.error("İndeks yükleme hatası:", err); }
+        }
+        function ekranDegistir(sonucModu) {
+            const anaSayfa = document.getElementById('ana-sayfa-ekrani');
+            const sonucSayfasi = document.getElementById('sonuc-ekrani');
+            if (sonucModu) { anaSayfa.classList.add('gizli'); sonucSayfasi.classList.remove('gizli'); }
+            else { sonucSayfasi.classList.add('gizli'); anaSayfa.classList.remove('gizli'); window.history.pushState({}, '', '/'); }
+        }
+        function snippetKontrol(sorgu) {
+            if (/^[0-9\\s\\+\\-\\*\\/\\(\\)\\.]+$/.test(sorgu)) {
+                try { return `${sorgu} = ${eval(sorgu)}`; } catch { return null; }
+            }
+            const low = sorgu.toLowerCase();
+            if (["sa", "selam", "merhaba"].includes(low)) { return "Merhaba! Zedin Arama Motoruna hoş geldiniz."; }
+            return null;
+        }
+        async function yerelSorguGonder(sorgu) {
+            sorgu = sorgu.trim();
+            if (!sorgu) return;
+            const tümBangler = { ...varsayilanBangler, ...kisiselBangleriYukle() };
+            const parcalar = sorgu.split(' ');
+            const ilkKelime = parcalar[0].toLowerCase();
+            if (tümBangler[ilkKelime]) {
+                const geriyeKalan = sorgu.substring(parcalar[0].length).trim();
+                window.location.href = tümBangler[ilkKelime] + encodeURIComponent(geriyeKalan);
+                return;
+            }
+            if (localStorage.getItem('zedin-gecmis-yok') !== 'true') {
+                window.history.pushState({}, '', '?q=' + encodeURIComponent(sorgu));
+            }
+            document.getElementById('ust-arama-input').value = sorgu;
+            ekranDegistir(true);
+            try {
+                let harf = "diger";
+                if (sorgu.length > 0) {
+                    let ilk = sorgu.charAt(0).toLowerCase();
+                    const mapping = {'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u'};
+                    ilk = mapping[ilk] || ilk;
+                    if (/^[a-z0-9]$/.test(ilk)) { harf = ilk; }
+                }
+                const shardRes = await fetch('/api/indeks?harf=' + harf);
+                if (shardRes.ok) {
+                    const shardVerisi = await shardRes.json();
+                    shardVerisi.forEach(item => {
+                        if (!zedinHafizasi.some(x => x[0] === item[0])) { zedinHafizasi.push(item); }
+                    });
+                }
+            } catch(err) { console.error("Shard yükleme hatası:", err); }
+            const t0 = performance.now();
+            let sonuclar = [];
+            const hızlıYanit = snippetKontrol(sorgu);
+            const akilliAlan = document.getElementById('akilli-yanit-alani');
+            if (hızlıYanit) {
+                akilliAlan.innerHTML = `<div class="smart-answer"><div class="smart-answer-label">Hızlı Yanıt</div><div class="smart-answer-text">${hızlıYanit}</div></div>`;
+            } else { akilliAlan.innerHTML = ''; }
+            const yerelKisiselSiteler = await yerelVerileriGetir();
+            const tamAramaHavuzu = [...zedinHafizasi, ...yerelKisiselSiteler];
+            let filtrelenmisHavuz = [];
+            if (typeof zedinSkorlaVeFiltrele === 'function') { filtrelenmisHavuz = zedinSkorlaVeFiltrele(tamAramaHavuzu); }
+            else { filtrelenmisHavuz = tamAramaHavuzu.map(s => ({ sayfa: s, kisiselSkor: 0 })); }
+            const sorguKelimeleri = zedinMetniStandardizeEt(sorgu).split(/\s+/).filter(k => k.length > 0);
+            if (sorguKelimeleri.length > 0) {
+                for (let item of filtrelenmisHavuz) {
+                    const url = item.sayfa[0] || "";
+                    const baslik = item.sayfa[1] || "";
+                    const icerik = item.sayfa[2] || "";
+                    if (alakaliMi(sorguKelimeleri, baslik, icerik)) {
+                        let skor = item.kisiselSkor;
+                        const sBaslik = zedinMetniStandardizeEt(baslik);
+                        const sIcerik = zedinMetniStandardizeEt(icerik);
+                        for (let kelime of sorguKelimeleri) {
+                            if (sBaslik.includes(kelime)) skor += 10;
+                            if (sIcerik.includes(kelime)) skor += 2;
+                        }
+                        sonuclar.push({ sayfa: item.sayfa, skor });
+                    }
+                }
+                sonuclar.sort((a, b) => b.skor - a.skor);
+            }
+            if (!hızlıYanit && typeof zedinAI_HizliYanitUret === 'function' && sonuclar.length > 0) {
+                akilliAlan.innerHTML = `<div class="smart-answer"><div class="smart-answer-label">🧠 Zedin AI Özetliyor...</div><div class="smart-answer-text" id="zedin-ai-loading" style="font-size:14px; font-weight:normal; color:var(--muted);">Düşünce zinciri kuruluyor, lokal model çalışıyor...</div></div>`;
+                zedinAI_HizliYanitUret(sorgu, sonuclar).then(aiYanit => {
+                    const loadingEl = document.getElementById('zedin-ai-loading');
+                    if(loadingEl) {
+                        loadingEl.parentElement.innerHTML = `<div class="smart-answer-label">🧠 Zedin AI Yanıtı</div><div class="smart-answer-text" style="font-size:15px; font-weight:normal; line-height:1.5;">${aiYanit}</div>`;
+                    }
+                });
+            }
+            const t1 = performance.now();
+            const aramaSuresi = ((t1 - t0) / 1000).toFixed(3);
+            document.getElementById('arama-metrikleri').innerHTML = `${sonuclar.length} sonuç — ${aramaSuresi} saniye`;
+            const sonuclarAlani = document.getElementById('ana-sonuclar-alani');
+            sonuclarAlani.innerHTML = '';
+            const hamSonuclar = sonuclar.map(s => s.sayfa).slice(0, 20);
+            if (hamSonuclar.length > 0) {
+                hamSonuclar.forEach(satir => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.innerHTML = `
+                        <div class="result-domain">
+                            <img class="result-favicon" src="https://www.google.com/s2/favicons?domain=${satir[0]}&sz=16" onerror="this.style.display='none'">
+                            <span class="result-url-text">${satir[0]}</span>
+                        </div>
+                        <h3 class="result-title"><a href="${satir[0]}" target="_blank" rel="noopener">${satir[1]}</a></h3>
+                        <p class="result-snippet">${satir[2]}...</p>
+                    `;
+                    sonuclarAlani.appendChild(div);
+                });
+            } else if (!hızlıYanit) {
+                sonuclarAlani.innerHTML = `<div class="no-result"><div class="no-result-icon">🔍</div><div class="no-result-title">Sonuç bulunamadı</div><p>${sorgu} için herhangi bir sonuç bulunamadı.</p></div>`;
+            }
+        }
+        window.onload = indeksiIndir;
+    </script>
+</body>
+</html>"""
+
