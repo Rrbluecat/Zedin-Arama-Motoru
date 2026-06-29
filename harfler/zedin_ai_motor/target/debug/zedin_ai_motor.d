@@ -1,0 +1,1 @@
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/target/debug/zedin_ai_motor: /data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/src/ai_filtre.rs /data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/src/main.rs /data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/src/tarayici.rs

@@ -1,0 +1,8 @@
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/target/debug/deps/displaydoc-29d18ff18d2d945c.d: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/attr.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/expand.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/fmt.rs
+
+/data/data/com.termux/files/home/Zedin-Arama-Motoru/harfler/zedin_ai_motor/target/debug/deps/libdisplaydoc-29d18ff18d2d945c.so: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/attr.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/expand.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/fmt.rs
+
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/lib.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/attr.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/expand.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.6/src/fmt.rs:
