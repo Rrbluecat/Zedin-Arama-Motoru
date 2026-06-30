@@ -3,6 +3,6 @@ providers = ["python", "node"]
 [phases.build]
 cmds = [
     "pip install -r requirements.txt",
-    "npm install && npm run build"
+    "cd zedin-frontend && npm install && npm run build"
 ]
 
