@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './globals.css';
 // 🚀 Kullanıcının kendi lokal dosyası (Eğer varsa yüklenecek)
 import '../../custom-zedin.css'; 
 
