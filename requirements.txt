@@ -6,3 +6,4 @@ beautifulsoup4==4.12.3
 lxml==5.1.0
 gunicorn==21.2.0
 supervisor==4.2.5
+setuptools==70.0.0
