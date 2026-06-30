@@ -1,12 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Kullanıcının kendi lokalinde özelleştirdiği örnek dosya */
 :root {
   --accent: #ff4500 !important; /* Logoyu ve butonları turuncu yap */
   --bg: #050505 !important;      /* Arka planı tamamen zifiri siyah yap */
-}
-
-/* Sonuç başlıklarını italik ve daha büyük yapmak isteyen bir kullanıcı */
-.result-title a {
-  font-style: italic;
-  font-size: 22px !important;
 }
 
