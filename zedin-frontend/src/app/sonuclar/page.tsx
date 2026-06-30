@@ -1,12 +1,13 @@
 'use client';
-import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
 
-export default function ResultsPage() {
+import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+
+// 🧠 1. Senin mevcut arama motoru arayüzün ve tüm mantığın burada (Zerre değişmedi)
+function ResultsContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
   const lens = searchParams.get('lens') || 'genel';
-  
   const [sorgu, setSorgu] = useState(q);
   const [yukleniyor, setYukleniyor] = useState(true);
 
@@ -17,13 +18,11 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f9f8] dark:bg-[#0f172a] text-[#1a1a1a] dark:text-[#f9fafb]">
-      
       {/* Üst Yapışkan Header */}
       <header className="sticky top-0 z-50 bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-800 shadow-sm px-6 py-4 flex items-center gap-6">
         <a href="/" className="text-2xl font-black tracking-tighter text-purple-700 dark:text-purple-400 select-none">
           Zedin<span className="text-green-500">.</span>
         </a>
-        
         <form className="flex-1 max-w-2xl flex items-center bg-[#f3f4f6] dark:bg-[#0f172a] rounded-xl px-4 py-2 border border-transparent focus-within:border-purple-500 transition-all">
           <input
             type="text"
@@ -37,7 +36,6 @@ export default function ResultsPage() {
 
       {/* İki Sütunlu Ana Gövde */}
       <main className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Sol Sütun: Arama Sonuçları (Max Genişlik Kuralı Uygulandı) */}
         <section className="lg:col-span-2 max-w-2xl w-full">
           <div className="text-xs text-gray-400 dark:text-gray-500 mb-6 font-medium">
@@ -75,7 +73,6 @@ export default function ResultsPage() {
         <aside className="space-y-6">
           <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm">
             <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase mb-4">Arayüz Kişiselleştirme</h4>
-            
             <div className="space-y-4 text-xs font-medium text-gray-600 dark:text-gray-300">
               <div className="flex justify-between items-center">
                 <span>Arama Yoğunluğu</span>
@@ -97,12 +94,24 @@ export default function ResultsPage() {
             <input type="text" placeholder="pinterest.com" className="w-full bg-gray-50 dark:bg-[#0f172a] border border-gray-200 dark:border-gray-800 text-xs p-2.5 rounded-lg mb-2 outline-none" />
             <button className="w-full bg-[#1a1a1a] dark:bg-purple-600 text-white text-xs font-bold py-2 rounded-lg hover:opacity-90 transition-opacity">
               Siteyi Engelle veya Öne Çıkar
-            </button>
+             </button>
           </div>
         </aside>
-
       </main>
     </div>
+  );
+}
+
+// 🛡️ 2. Next.js Derleyicisini Kurtaran Ana Yapı (Default Export)
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f9f9f8] dark:bg-[#0f172a] flex items-center justify-center text-sm font-medium text-gray-500">
+        Zedin arama sonuçları yükleniyor...
+      </div>
+    }>
+      <ResultsContent />
+    </Suspense>
   );
 }
 
