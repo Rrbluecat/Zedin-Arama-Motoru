@@ -1,0 +1,13 @@
+# Railway'e hem Python hem Node.js kurmasını dikte ediyoruz
+[providers]
+providers = ["python", "node"]
+
+[phases.setup]
+nixPkgs = ["...", "nodejs"]
+
+[phases.build]
+cmds = [
+    "pip install -r requirements.txt",
+    "cd zedin-frontend && npm install && npm run build"
+]
+
