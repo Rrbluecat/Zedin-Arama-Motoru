@@ -20,7 +20,6 @@ limiter = Limiter(
     default_limits=["100 per minute"],  # Limit profesyonel bir API için esnetildi
     storage_uri="memory://"
 )
-
 KARA_LISTE_BOTLAR = ["sqlmap", "nikto", "dirbuster", "nmap", "python-requests"]
 
 @app.before_request
@@ -58,7 +57,6 @@ ARAMA_INDEKSI = ShardedIndexList()
 
 # 🚀 DOSYALARI RAM'E TOPLAMA MOTORU
 dosya_kaliplari = ["arama_indeksi_*.json", "arama_indeksi_*.json.gz", "arama_indeksi.json", "arama_indeksi.json.gz"]
-
 for kalip in dosya_kaliplari:
     for dosya in glob.glob(kalip):
         try:
@@ -77,7 +75,6 @@ for kalip in dosya_kaliplari:
 print(f"[*] Toplam {len(ARAMA_INDEKSI)} döküman bellek havuzuna güvenle yüklendi.")
 
 # 🛰️ --- API ENDPOINT'LERİ ---
-
 @app.route("/api/indeks", methods=["GET"])
 def api_indeks():
     """Frontend'in shard veya tüm indeksi JSON olarak çekeceği ana damar"""
@@ -92,17 +89,17 @@ def ekle():
     """Yeni URL ekleme isteği artık JSON dönecek, yönlendirme (redirect) yapmayacak"""
     veri = request.get_json() or {}
     hedef_url = veri.get("yeni_url", "").strip()
-    
+
     if not hedef_url:
         return jsonify({"durum": "hata", "mesaj": "URL boş olamaz"}), 400
-        
+
     # Arka planda taramayı başlat (Thread kullanarak Flask'ı kilitlemiyoruz)
     threading.Thread(
-        target=link_ayıkla_ve_tarla, 
-        args=(hedef_url,), 
+        target=link_ayıkla_ve_tarla,
+        args=(hedef_url,),
         kwargs={"max_sayfa": 250, "eszamanli_isci": 5}
     ).start()
-    
+
     return jsonify({"durum": "basarili", "mesaj": f"{hedef_url} için tarama arka planda başlatıldı."})
 
 @app.route("/api/otomatik-besle", methods=["GET"])
@@ -113,6 +110,8 @@ def otomatik_besle_tetikle():
     return jsonify({"durum": "basarili", "mesaj": "Zedin paralel örümcekleri arka planda uyandı!"})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # 🚨 PORT KRİZİNİ ÇÖZEN DEĞİŞİKLİK:
+    # Railway'in dış PORT değişkenini Next.js'e bırakıyoruz.
+    # Flask içeride tamamen izole bir şekilde 5000 portuna çekiliyor.
+    app.run(host="127.0.0.1", port=5000, debug=False)
 
